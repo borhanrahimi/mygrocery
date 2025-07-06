@@ -1,0 +1,31 @@
+.category-grid {
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  margin-top: 2rem;
+  flex-wrap: wrap;
+}
+
+.category-tile {
+  text-align: center;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.category-tile:hover {
+  transform: scale(1.05);
+}
+
+.category-img {
+  width: 100px;
+  height: 100px;
+  border-radius: 50px;
+  object-fit: cover;
+  border: 2px solid #ccc;
+}
+
+.category-label {
+  margin-top: 0.5rem;
+  font-weight: bold;
+  color: #555;
+}

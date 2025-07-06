@@ -1,0 +1,137 @@
+/* === Global === */
+body {
+  margin: 0;
+  font-family: 'Segoe UI', sans-serif;
+  background-color: #f8f8f8;
+}
+
+/* === Navbar === */
+.navbar, .main-header {
+  background-color: #000;
+  color: white;
+  padding: 1rem 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.header-logo {
+  font-family: 'Georgia', serif;
+  font-style: italic;
+  font-weight: bold;
+  font-size: 1.5rem;
+  color: white;
+  text-decoration: none;
+}
+
+.search-bar {
+  flex: 1;
+  max-width: 500px;
+  margin: 0 2rem;
+  padding: 0.5rem 1rem;
+  border-radius: 25px;
+  border: none;
+  font-size: 1rem;
+}
+
+.header-icons {
+  display: flex;
+  gap: 1.5rem;
+}
+
+.icon-link {
+  color: white;
+  text-decoration: none;
+  font-size: 1.4rem;
+  cursor: pointer;
+}
+
+/* === Product List === */
+ul {
+  list-style: none;
+  padding: 0;
+}
+
+.product-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  margin-bottom: 12px;
+}
+
+.product-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.product-img {
+  width: 80px !important;
+  height: 80px !important;
+  object-fit: cover !important;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  display: block;
+  flex-shrink: 0;
+}
+
+/* === Buttons === */
+.add-btn, .remove-btn {
+  background-color: #4caf50;
+  color: white;
+  padding: 6px 12px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.remove-btn {
+  background-color: #d32f2f;
+}
+
+.add-btn:hover {
+  background-color: #388e3c;
+}
+
+.remove-btn:hover {
+  background-color: #b71c1c;
+}
+
+/* === Category Filter === */
+.category-bar {
+  margin-top: 1rem;
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.category-btn {
+  padding: 8px 14px;
+  background-color: #eee;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.category-btn:hover {
+  background-color: #ddd;
+}
+
+.category-btn.active {
+  background-color: #14532d;
+  color: white;
+  border-color: #14532d;
+}
+
+/* === Responsive === */
+@media (max-width: 600px) {
+  .product-img {
+    width: 60px !important;
+    height: 60px !important;
+  }
+}
