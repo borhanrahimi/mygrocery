@@ -1,0 +1,10 @@
+POST http://localhost:3000/api/products
+Content-Type: application/json
+
+{
+  "name": "Ground Beef",
+  "price": 5.99,
+  "category": "Meat",
+  "image": "https://embed.widencdn.net/img/beef/4hh1pywcnj/480x360px/Grind_Fine_85.psd?keep=c&u=7fueml",
+  "stockQuantity": 30
+}
