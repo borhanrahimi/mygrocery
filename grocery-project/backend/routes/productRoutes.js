@@ -23,4 +23,18 @@ router.post('/', async (req, res) => {
   }
 });
 
+// GET /api/products/search?q=...
+router.get('/search', async (req, res) => {
+  const q = req.query.q;
+  try {
+    const products = await Product.find({
+      name: { $regex: q, $options: 'i' }
+    });
+    res.json(products);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = router;
+

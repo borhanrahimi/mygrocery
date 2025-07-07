@@ -8,8 +8,10 @@ import CategoryPage from "./pages/CategoryPage";
 import CheckoutSuccessPage from "./pages/CheckoutSuccessPage";
 import OrderHistoryPage from "./pages/OrderHistoryPage";
 import ProfilePage from "./pages/ProfilePage";
+import SearchResultsPage from "./pages/SearchResultsPage"; // ✅ updated
 import { RequireLogin } from "./components/RequireLogin";
 import "./App.css";
+
 
 function App() {
   return (
@@ -26,6 +28,7 @@ function App() {
           <Route path="/orders" element={<RequireLogin><OrderHistoryPage /></RequireLogin>} />
           <Route path="/category/:categoryName" element={<RequireLogin><CategoryPage /></RequireLogin>} />
           <Route path="/checkout-success" element={<RequireLogin><CheckoutSuccessPage /></RequireLogin>} />
+          <Route path="/search" element={<SearchResultsPage/>} />
 
           {/* 404 fallback */}
           <Route

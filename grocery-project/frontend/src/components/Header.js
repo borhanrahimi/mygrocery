@@ -6,9 +6,11 @@ import "./Header.css";
 
 function Header() {
   const { user, logout } = useContext(AuthContext);
-  const { count } = useContext(CartContext);
+  const { count, updateCartCount } = useContext(CartContext);
   const [firstName, setFirstName] = useState("");
   const [showDropdown, setShowDropdown] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [suggestions, setSuggestions] = useState([]);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -16,10 +18,7 @@ function Header() {
       fetch(`/api/auth/profile/${user}`)
         .then((res) => res.json())
         .then((data) => setFirstName(data.firstName || ""))
-        .catch((err) => {
-          console.error("❌ Failed to load user name:", err);
-          setFirstName("");
-        });
+        .catch(() => setFirstName(""));
     } else {
       setFirstName("");
       setShowDropdown(false);
@@ -44,11 +43,99 @@ function Header() {
     setShowDropdown(false);
   };
 
+  const handleSearch = (e) => {
+    const value = e.target.value;
+    setSearchQuery(value);
+
+    if (value.trim()) {
+      fetch("/api/products")
+        .then((res) => res.json())
+        .then((products) => {
+          const matches = products.filter((p) =>
+            p.name.toLowerCase().includes(value.toLowerCase())
+          );
+          setSuggestions(matches.slice(0, 5));
+        });
+    } else {
+      setSuggestions([]);
+    }
+  };
+
+  const handleSearchKeyPress = (e) => {
+    if (e.key === "Enter" && searchQuery.trim()) {
+      navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+      setSearchQuery("");
+      setSuggestions([]);
+    }
+  };
+
+  const handleSuggestionClick = (name) => {
+    navigate(`/search?q=${encodeURIComponent(name)}`);
+    setSearchQuery("");
+    setSuggestions([]);
+  };
+
+  const handleAddToCart = (productId) => {
+    if (!user) {
+      navigate("/auth");
+      return;
+    }
+
+    fetch("/api/cart/add", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        userId: user,
+        productId,
+        quantity: 1,
+      }),
+    })
+      .then((res) => res.json())
+      .then(() => {
+        setSuggestions([]);
+        updateCartCount(); // ⬅️ instantly refresh cart count
+      })
+      .catch((err) => {
+        console.error("❌ Add to cart failed:", err);
+      });
+  };
+
   return (
     <header className="main-header">
       <Link to="/" className="header-logo">Mygrocery</Link>
 
-      <input type="text" placeholder="Search" className="search-bar" />
+      <div className="search-wrapper">
+        <input
+          type="text"
+          placeholder="Search"
+          className="search-bar"
+          value={searchQuery}
+          onChange={handleSearch}
+          onKeyDown={handleSearchKeyPress}
+        />
+        {suggestions.length > 0 && (
+          <ul className="search-suggestions">
+            {suggestions.map((item) => (
+              <li key={item._id} className="suggestion-item">
+                <span onClick={() => handleSuggestionClick(item.name)} className="product-name">
+                  {item.name}
+                </span>
+                <button
+                  className="add-btn"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleAddToCart(item._id);
+                  }}
+                >
+                  add
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
 
       <div className="header-icons">
         <Link to="/cart" className="icon-link cart-icon-wrapper">
