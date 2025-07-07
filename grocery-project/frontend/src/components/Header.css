@@ -54,3 +54,15 @@
   border-radius: 50%;
   font-weight: bold;
 }
+.user-section {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+}
+
+.user-name {
+  font-weight: 500;
+  color: white;
+  font-size: 1rem;
+}

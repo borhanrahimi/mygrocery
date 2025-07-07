@@ -1,82 +1,70 @@
-.auth-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
-  background: #f0f0f0;
-}
-
-.auth-box {
-  background: white;
+.login-container {
+  max-width: 400px;
+  margin: 3rem auto;
   padding: 2rem;
-  border-radius: 2rem;
-  box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
-  width: 100%;
-  max-width: 360px;
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
+  background: white;
+  border-radius: 25px;
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+  text-align: center;
 }
 
-.auth-box h1 {
-  font-family: 'Georgia', serif;
-  font-weight: bold;
-  font-style: italic;
-  font-size: 1.6rem;
-  text-align: center;
-  margin-bottom: 0.5rem;
-}
-
-.auth-box h2 {
-  font-weight: bold;
-  text-align: center;
+.login-container h2 {
   margin-bottom: 1rem;
-}
-
-.auth-box input {
-  margin: 0.4rem 0;
-  padding: 0.6rem 0;
-  font-size: 1rem;
-  border: none;
-  border-bottom: 1px solid #ccc;
-  background: transparent;
-  outline: none;
-}
-
-.auth-box input:focus {
-  border-bottom: 1px solid #000;
-}
-
-.auth-btn {
-  margin-top: 1.5rem;
-  padding: 0.75rem;
-  font-size: 1rem;
+  font-size: 1.5rem;
   font-weight: bold;
+}
+
+.login-container input {
+  padding: 0.75rem;
+  border: none;
+  border-bottom: 2px solid #ccc;
+  outline: none;
+  width: 100%;
+  font-size: 1rem;
+  margin-bottom: 1rem;
+  background: transparent;
+}
+
+.login-container input:focus {
+  border-bottom-color: #000;
+}
+
+.login-container button[type="submit"] {
   background-color: #555;
   color: white;
+  font-size: 1rem;
+  font-weight: bold;
+  padding: 0.75rem;
+  border-radius: 25px;
   border: none;
-  border-radius: 2rem;
+  width: 100%;
   cursor: pointer;
-  transition: background 0.2s;
+  margin-top: 1rem;
 }
 
-.auth-btn:hover {
+.login-container button[type="submit"]:hover {
   background-color: #333;
 }
 
-.forgot-link {
+.login-container p {
+  margin-top: 1rem;
+  font-size: 0.9rem;
+}
+
+.login-container a {
+  color: #007bff;
+  text-decoration: none;
+}
+
+.login-container a:hover {
+  text-decoration: underline;
+}
+
+.toggle-button {
   background: none;
   border: none;
   color: #007bff;
-  text-decoration: underline;
   cursor: pointer;
-  padding: 0;
-  font: inherit;
-  margin-bottom: 1rem;
-}
-
-.toggle-link {
-  color: #007bff;
-  cursor: pointer;
-  font-weight: bold;
+  font-size: 0.95rem;
+  padding-left: 5px;
 }

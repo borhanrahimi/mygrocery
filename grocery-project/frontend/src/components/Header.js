@@ -5,7 +5,7 @@ import { AuthContext } from "../context/AuthContext";
 import "./Header.css";
 
 function Header() {
-  const { user, logout } = useContext(AuthContext);
+  const { user } = useContext(AuthContext);
   const { count } = useContext(CartContext);
   const [firstName, setFirstName] = useState("");
   const navigate = useNavigate();
@@ -42,16 +42,10 @@ function Header() {
           {count > 0 && <span className="cart-badge">{count}</span>}
         </Link>
 
-        {user ? (
-          <>
-            <span className="icon-link user-info" onClick={handleUserClick}>
-              👤 {firstName}
-            </span>
-            <button className="logout-btn" onClick={logout}>Logout</button>
-          </>
-        ) : (
-          <Link to="/auth" className="icon-link">👤</Link>
-        )}
+        <div className="user-section" onClick={handleUserClick}>
+          <span className="icon-link">👤</span>
+          {firstName && <span className="user-name">{firstName}</span>}
+        </div>
       </div>
     </header>
   );

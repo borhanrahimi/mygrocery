@@ -1,45 +1,46 @@
 import React, { useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
+import "./LoginRegister.css";
 
 function LoginRegisterPage() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [mode, setMode] = useState("login"); // "login" or "register"
   const [submitting, setSubmitting] = useState(false);
+  const { login } = useContext(AuthContext);
   const navigate = useNavigate();
 
-  const { login } = useContext(AuthContext); // ✅ get login from context
+  // Form states
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [phone, setPhone] = useState("");
 
-  const handleLogin = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-
-    if (!email || !password) {
-      alert("Please enter both email and password.");
-      return;
-    }
-
     setSubmitting(true);
 
     try {
-      const res = await fetch("/api/auth/login", {
+      const payload =
+        mode === "login"
+          ? { email, password }
+          : { email, password, firstName, lastName, phone };
+
+      const res = await fetch(`/api/auth/${mode}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify(payload),
       });
 
-      if (!res.ok) {
-        const error = await res.json();
-        throw new Error(error.error || "Login failed");
-      }
-
       const data = await res.json();
-      localStorage.setItem("userId", data.userId); // ✅ store in localStorage
-      login(data.userId); // ✅ update context
+      if (!res.ok) throw new Error(data.error || "Something went wrong");
 
-      navigate("/"); // ✅ go to home after login
+      localStorage.setItem("userId", data.userId);
+      login(data.userId);
+      navigate("/");
     } catch (err) {
-      console.error("❌ Login error:", err);
-      alert(err.message || "Invalid credentials");
+      console.error("❌ Auth error:", err);
+      alert(err.message);
     } finally {
       setSubmitting(false);
     }
@@ -47,8 +48,35 @@ function LoginRegisterPage() {
 
   return (
     <div className="login-container" style={{ maxWidth: "400px", margin: "2rem auto" }}>
-      <h2>Login</h2>
-      <form onSubmit={handleLogin} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+      <h2>{mode === "login" ? "Login" : "Register"}</h2>
+
+      <form
+        onSubmit={handleSubmit}
+        style={{ display: "flex", flexDirection: "column", gap: "1rem" }}
+      >
+        {mode === "register" && (
+          <>
+            <input
+              value={firstName}
+              onChange={(e) => setFirstName(e.target.value)}
+              placeholder="First Name"
+              required
+            />
+            <input
+              value={lastName}
+              onChange={(e) => setLastName(e.target.value)}
+              placeholder="Last Name"
+              required
+            />
+            <input
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              placeholder="Phone"
+              required
+            />
+          </>
+        )}
+
         <input
           value={email}
           onChange={(e) => setEmail(e.target.value)}
@@ -62,10 +90,21 @@ function LoginRegisterPage() {
           placeholder="Password"
           required
         />
+
         <button type="submit" disabled={submitting}>
-          {submitting ? "Logging in..." : "Login"}
+          {submitting ? (mode === "login" ? "Logging in..." : "Registering...") : mode === "login" ? "Login" : "Register"}
         </button>
       </form>
+
+      <p style={{ textAlign: "center", marginTop: "1rem" }}>
+        {mode === "login" ? "Don't have an account?" : "Already have an account?"}{" "}
+        <button
+          onClick={() => setMode(mode === "login" ? "register" : "login")}
+          style={{ background: "none", border: "none", color: "blue", cursor: "pointer" }}
+        >
+          {mode === "login" ? "Sign Up" : "Log In"}
+        </button>
+      </p>
     </div>
   );
 }
