@@ -1,127 +1,70 @@
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
-import "./LoginRegister.css";
+import { AuthContext } from "../context/AuthContext";
 
 function LoginRegisterPage() {
-  const [mode, setMode] = useState("login");
-  const [form, setForm] = useState({
-    firstName: "",
-    lastName: "",
-    phone: "",
-    email: "",
-    password: "",
-  });
-
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [submitting, setSubmitting] = useState(false);
   const navigate = useNavigate();
 
-  const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  };
+  const { login } = useContext(AuthContext); // ✅ get login from context
 
-  const handleSubmit = async (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
 
-    // ✅ Corrected endpoints to match backend
-    const endpoint = mode === "login" ? "/api/auth/login" : "/api/auth/register";
-    const payload = mode === "login"
-      ? { email: form.email, password: form.password }
-      : form;
+    if (!email || !password) {
+      alert("Please enter both email and password.");
+      return;
+    }
+
+    setSubmitting(true);
 
     try {
-      const res = await fetch(endpoint, {
+      const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({ email, password }),
       });
 
-      const data = await res.json();
-
-      if (data.userId) {
-        localStorage.setItem("user", JSON.stringify(data));
-        navigate("/");
-      } else {
-        alert(data.error || "Authentication failed");
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || "Login failed");
       }
+
+      const data = await res.json();
+      localStorage.setItem("userId", data.userId); // ✅ store in localStorage
+      login(data.userId); // ✅ update context
+
+      navigate("/"); // ✅ go to home after login
     } catch (err) {
-      alert("⚠️ Network error or server is down.");
-      console.error("❌ Login/Register error:", err);
+      console.error("❌ Login error:", err);
+      alert(err.message || "Invalid credentials");
+    } finally {
+      setSubmitting(false);
     }
   };
 
   return (
-    <div className="auth-container">
-      <form className="auth-box" onSubmit={handleSubmit}>
-        <h1>Mygrocery</h1>
-        <h2>{mode === "login" ? "Login" : "Sign Up"}</h2>
-
-        {mode === "signup" && (
-          <>
-            <input
-              name="firstName"
-              placeholder="First Name"
-              value={form.firstName}
-              onChange={handleChange}
-              required
-            />
-            <input
-              name="lastName"
-              placeholder="Last Name"
-              value={form.lastName}
-              onChange={handleChange}
-              required
-            />
-            <input
-              name="phone"
-              placeholder="Phone Number"
-              value={form.phone}
-              onChange={handleChange}
-              required
-            />
-          </>
-        )}
-
+    <div className="login-container" style={{ maxWidth: "400px", margin: "2rem auto" }}>
+      <h2>Login</h2>
+      <form onSubmit={handleLogin} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
         <input
-          name="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
           placeholder="Email"
-          type="email"
-          value={form.email}
-          onChange={handleChange}
           required
         />
         <input
-          name="password"
-          placeholder="Password"
           type="password"
-          value={form.password}
-          onChange={handleChange}
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          placeholder="Password"
           required
         />
-
-        {mode === "login" && (
-          <button
-            type="button"
-            className="forgot-link"
-            onClick={() => alert("Reset password coming soon!")}
-          >
-            Forgot your password?
-          </button>
-        )}
-
-        <button type="submit" className="auth-btn">
-          {mode === "login" ? "Log in" : "Sign up"}
+        <button type="submit" disabled={submitting}>
+          {submitting ? "Logging in..." : "Login"}
         </button>
-
-        <p style={{ marginTop: "1rem" }}>
-          {mode === "login"
-            ? "Don't have an account?"
-            : "Already have an account?"}{" "}
-          <span
-            className="toggle-link"
-            onClick={() => setMode(mode === "login" ? "signup" : "login")}
-          >
-            {mode === "login" ? "sign up" : "log in"}
-          </span>
-        </p>
       </form>
     </div>
   );

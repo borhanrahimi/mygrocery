@@ -1,61 +1,124 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const Cart = require('../models/ShoppingCart');
+const ShoppingCart = require("../models/ShoppingCart");
 
-// GET cart by userId
-router.get('/:userId', async (req, res) => {
-  const { userId } = req.params;
-  const cart = await Cart.findOne({ userId }).populate('items.productId');
-  if (!cart) return res.json({ items: [] });
-  res.json(cart);
-});
-
-// POST - Add to cart
-router.post('/add', async (req, res) => {
+// ✅ ADD ITEM TO CART
+router.post("/add", async (req, res) => {
   const { userId, productId } = req.body;
-  let cart = await Cart.findOne({ userId });
 
-  if (!cart) {
-    cart = new Cart({
-      cartId: userId,
-      userId,
-      items: [{ productId, quantity: 1 }]
-    });
-  } else {
-    const existing = cart.items.find((item) => item.productId.toString() === productId);
-    if (existing) {
-      existing.quantity += 1;
+  try {
+    let cart = await ShoppingCart.findOne({ userId });
+
+    if (!cart) {
+      cart = new ShoppingCart({
+        userId,
+        cartId: Date.now().toString(),
+        items: [],
+      });
+    }
+
+    const existingItem = cart.items.find(
+      (item) => item.productId.toString() === productId
+    );
+
+    if (existingItem) {
+      existingItem.quantity += 1;
     } else {
       cart.items.push({ productId, quantity: 1 });
     }
-  }
 
-  await cart.save();
-  res.json(cart);
+    await cart.save();
+    await cart.populate("items.productId");
+
+    res.json({ items: cart.items });
+  } catch (err) {
+    console.error("❌ Add to cart error:", err);
+    res.status(500).json({ error: "Something went wrong" });
+  }
 });
 
-// POST - Remove ONE item from cart
-router.post('/remove', async (req, res) => {
+// ✅ REMOVE ITEM FROM CART (decrease quantity or remove)
+router.post("/remove", async (req, res) => {
   const { userId, productId } = req.body;
-  let cart = await Cart.findOne({ userId });
 
-  if (cart) {
-    const item = cart.items.find(item => item.productId.toString() === productId);
+  try {
+    const cart = await ShoppingCart.findOne({ userId });
 
-    if (item) {
-      if (item.quantity > 1) {
-        item.quantity -= 1;
+    if (!cart) {
+      console.log("❌ No cart found for user:", userId);
+      return res.status(404).json({ error: "Cart not found" });
+    }
+
+    console.log("🗑️ Trying to remove productId:", productId);
+    console.log("🛒 Cart before:", cart.items.map(i => ({
+      pid: i.productId.toString(),
+      qty: i.quantity
+    })));
+
+    const index = cart.items.findIndex(
+      (item) => item.productId.toString() === productId
+    );
+
+    console.log("🔍 Matched index:", index);
+
+    if (index !== -1) {
+      if (cart.items[index].quantity > 1) {
+        cart.items[index].quantity -= 1;
+        console.log("➖ Decreased quantity of item:", productId);
       } else {
-        // Remove the item entirely if quantity is 1
-        cart.items = cart.items.filter(item => item.productId.toString() !== productId);
+        cart.items.splice(index, 1);
+        console.log("❌ Removed item:", productId);
       }
 
       await cart.save();
-      cart = await Cart.findOne({ userId }).populate('items.productId');
+      await cart.populate("items.productId");
+    } else {
+      console.log("❌ Item not found in cart:", productId);
     }
-  }
 
-  res.json(cart);
+    res.json({ items: cart.items });
+  } catch (err) {
+    console.error("❌ Remove from cart error:", err);
+    res.status(500).json({ error: "Something went wrong" });
+  }
+});
+
+
+// ✅ GET CART BY USER
+router.get("/:userId", async (req, res) => {
+  try {
+    const cart = await ShoppingCart.findOne({ userId: req.params.userId }).populate(
+      "items.productId"
+    );
+
+    if (!cart) {
+      return res.status(200).json({ items: [] });
+    }
+
+    res.json({ items: cart.items });
+  } catch (err) {
+    console.error("❌ Get cart error:", err);
+    res.status(500).json({ error: "Something went wrong" });
+  }
+});
+
+// ✅ OPTIONAL: CLEAR WHOLE CART (if needed)
+router.post("/clear", async (req, res) => {
+  const { userId } = req.body;
+
+  try {
+    const cart = await ShoppingCart.findOne({ userId });
+
+    if (cart) {
+      cart.items = [];
+      await cart.save();
+    }
+
+    res.json({ items: [] });
+  } catch (err) {
+    console.error("❌ Clear cart error:", err);
+    res.status(500).json({ error: "Something went wrong" });
+  }
 });
 
 module.exports = router;

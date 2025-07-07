@@ -5,10 +5,11 @@ import HomePage from "./pages/HomePage";
 import CartPage from "./pages/CartPage";
 import LoginRegisterPage from "./pages/LoginRegisterPage";
 import CategoryPage from "./pages/CategoryPage";
-import "./App.css";
 import CheckoutSuccessPage from "./pages/CheckoutSuccessPage";
 import OrderHistoryPage from "./pages/OrderHistoryPage";
-
+import ProfilePage from "./pages/ProfilePage";
+import { RequireLogin } from "./components/RequireLogin";
+import "./App.css";
 
 function App() {
   return (
@@ -17,17 +18,24 @@ function App() {
       <main className="home-content">
         <Routes>
           <Route path="/" element={<HomePage />} />
-          <Route path="/cart" element={<CartPage />} />
           <Route path="/auth" element={<LoginRegisterPage />} />
-          <Route path="/category/:categoryName" element={<CategoryPage />} />
-          <Route path="*" element={<h2 style={{ color: "red" }}>Page Not Found</h2>} />
-          <Route path="/checkout-success" element={<CheckoutSuccessPage />} />
-          <Route path="/orders" element={<OrderHistoryPage />} />
+
+          {/* Protected Routes */}
+          <Route path="/profile" element={<RequireLogin><ProfilePage /></RequireLogin>} />
+          <Route path="/cart" element={<RequireLogin><CartPage /></RequireLogin>} />
+          <Route path="/orders" element={<RequireLogin><OrderHistoryPage /></RequireLogin>} />
+          <Route path="/category/:categoryName" element={<RequireLogin><CategoryPage /></RequireLogin>} />
+          <Route path="/checkout-success" element={<RequireLogin><CheckoutSuccessPage /></RequireLogin>} />
+
+          {/* 404 fallback */}
+          <Route
+            path="*"
+            element={<h2 style={{ color: "red" }}>❌ Page Not Found</h2>}
+          />
         </Routes>
       </main>
     </Router>
   );
 }
-
 
 export default App;

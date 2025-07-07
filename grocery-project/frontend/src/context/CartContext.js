@@ -1,6 +1,6 @@
 import { createContext, useState, useEffect } from "react";
 
-export const CartContext = createContext();
+export const CartContext = createContext(); // ✅ Named export
 
 export function CartProvider({ children }) {
   const [count, setCount] = useState(0);
@@ -13,6 +13,10 @@ export function CartProvider({ children }) {
         .then(data => {
           const totalItems = data.items?.reduce((acc, item) => acc + item.quantity, 0);
           setCount(totalItems || 0);
+        })
+        .catch(err => {
+          console.error("❌ Failed to load cart:", err);
+          setCount(0);
         });
     }
   }, [userId]);
