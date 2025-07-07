@@ -1,5 +1,3 @@
-// controllers/orderController.js
-
 const Cart = require("../models/ShoppingCart");
 const Order = require("../models/Order");
 
@@ -51,7 +49,10 @@ exports.getOrdersByUser = async (req, res) => {
   const { userId } = req.params;
 
   try {
-    const orders = await Order.find({ userId });
+    const orders = await Order.find({ userId })
+      .populate("items.productId") // ✅ This will include full product data
+      .sort({ timestamp: -1 });    // Optional: latest orders first
+
     res.json(orders);
   } catch (err) {
     console.error("❌ Error fetching orders:", err);

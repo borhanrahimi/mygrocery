@@ -5,9 +5,10 @@ import { AuthContext } from "../context/AuthContext";
 import "./Header.css";
 
 function Header() {
-  const { user } = useContext(AuthContext);
+  const { user, logout } = useContext(AuthContext);
   const { count } = useContext(CartContext);
   const [firstName, setFirstName] = useState("");
+  const [showDropdown, setShowDropdown] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -20,16 +21,27 @@ function Header() {
           setFirstName("");
         });
     } else {
-      setFirstName(""); // ✅ Clear name when user logs out
+      setFirstName("");
+      setShowDropdown(false);
     }
   }, [user]);
 
-  const handleUserClick = () => {
+  const toggleDropdown = () => {
     if (user) {
-      navigate("/profile");
+      setShowDropdown((prev) => !prev);
     } else {
       navigate("/auth");
     }
+  };
+
+  const handleNavigate = (path) => {
+    navigate(path);
+    setShowDropdown(false);
+  };
+
+  const handleLogout = () => {
+    logout();
+    setShowDropdown(false);
   };
 
   return (
@@ -44,9 +56,24 @@ function Header() {
           {count > 0 && <span className="cart-badge">{count}</span>}
         </Link>
 
-        <div className="user-section" onClick={handleUserClick}>
-          <span className="icon-link">👤</span>
-          {firstName && <span className="user-name">{firstName}</span>}
+        <div className="user-menu">
+          <span className="icon-link user-button" onClick={toggleDropdown}>
+            👤 {firstName}
+          </span>
+
+          {showDropdown && (
+            <div className="dropdown-menu">
+              <button className="dropdown-item" onClick={() => handleNavigate("/profile")}>
+                Profile
+              </button>
+              <button className="dropdown-item" onClick={() => handleNavigate("/orders")}>
+                Order History
+              </button>
+              <button className="dropdown-item logout" onClick={handleLogout}>
+                Logout
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </header>
