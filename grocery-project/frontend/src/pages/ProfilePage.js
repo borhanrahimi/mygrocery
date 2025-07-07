@@ -80,9 +80,9 @@ function ProfilePage() {
   }
 
   return (
-    <div style={{ maxWidth: "500px", margin: "2rem auto" }}>
+    <div className="profile-wrapper">
       <h2>Your Profile</h2>
-      <form onSubmit={handleSave} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+      <form onSubmit={handleSave} className="profile-form">
         <input
           name="firstName"
           value={formData.firstName}
@@ -126,17 +126,7 @@ function ProfilePage() {
         </button>
       </form>
 
-      <button
-        onClick={handleLogout}
-        style={{
-          marginTop: "2rem",
-          background: "crimson",
-          color: "white",
-          padding: "0.75rem",
-          border: "none",
-          borderRadius: "5px",
-        }}
-      >
+      <button className="logout-button" onClick={handleLogout}>
         Logout
       </button>
     </div>

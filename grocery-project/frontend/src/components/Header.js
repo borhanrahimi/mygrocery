@@ -19,6 +19,8 @@ function Header() {
           console.error("❌ Failed to load user name:", err);
           setFirstName("");
         });
+    } else {
+      setFirstName(""); // ✅ Clear name when user logs out
     }
   }, [user]);
 
