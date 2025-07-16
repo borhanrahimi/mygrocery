@@ -26,13 +26,16 @@ function LoginRegisterPage() {
           ? { email, password }
           : { email, password, firstName, lastName, phone };
 
-      const res = await fetch(`/api/auth/${mode}`, {
+      const API_URL = process.env.REACT_APP_API_URL;
+      const res = await fetch(`${API_URL}/api/auth/${mode}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
 
-      const data = await res.json();
+      // ✅ Safe JSON parsing to avoid "unexpected end of input"
+      const data = await res.json().catch(() => ({}));
+
       if (!res.ok) throw new Error(data.error || "Something went wrong");
 
       localStorage.setItem("userId", data.userId);
@@ -92,7 +95,13 @@ function LoginRegisterPage() {
         />
 
         <button type="submit" disabled={submitting}>
-          {submitting ? (mode === "login" ? "Logging in..." : "Registering...") : mode === "login" ? "Login" : "Register"}
+          {submitting
+            ? mode === "login"
+              ? "Logging in..."
+              : "Registering..."
+            : mode === "login"
+            ? "Login"
+            : "Register"}
         </button>
       </form>
 

@@ -5,10 +5,11 @@ require('dotenv').config(); // Load .env variables
 
 const app = express();
 
-// ✅ CORS setup to allow localhost and Vercel frontend
+// ✅ CORS setup for localhost (React + Postman) and Vercel frontend
 const allowedOrigins = [
-  'http://localhost:3000',
-  'https://mygrocery.vercel.app'
+  'http://localhost:3000',                      // React dev server
+  'http://localhost:5000',                      // Postman or other local clients (if needed)
+  'https://mygrocery-frontend.vercel.app'       // Vercel frontend
 ];
 
 app.use(cors({
@@ -16,6 +17,7 @@ app.use(cors({
     if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
+      console.log('❌ Blocked by CORS:', origin);
       callback(new Error('CORS not allowed'));
     }
   },
