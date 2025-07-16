@@ -4,7 +4,24 @@ const cors = require('cors');
 require('dotenv').config(); // Load .env variables
 
 const app = express();
-app.use(cors());
+
+// ✅ CORS setup to allow localhost and Vercel frontend
+const allowedOrigins = [
+  'http://localhost:3000',
+  'https://mygrocery.vercel.app'
+];
+
+app.use(cors({
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('CORS not allowed'));
+    }
+  },
+  credentials: true
+}));
+
 app.use(express.json());
 
 // Load routes
