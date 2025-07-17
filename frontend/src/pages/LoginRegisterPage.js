@@ -27,15 +27,14 @@ function LoginRegisterPage() {
           : { email, password, firstName, lastName, phone };
 
       const API_URL = process.env.REACT_APP_API_URL;
+
       const res = await fetch(`${API_URL}/api/auth/${mode}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
 
-      // ✅ Safe JSON parsing to avoid "unexpected end of input"
       const data = await res.json().catch(() => ({}));
-
       if (!res.ok) throw new Error(data.error || "Something went wrong");
 
       localStorage.setItem("userId", data.userId);
@@ -53,10 +52,7 @@ function LoginRegisterPage() {
     <div className="login-container" style={{ maxWidth: "400px", margin: "2rem auto" }}>
       <h2>{mode === "login" ? "Login" : "Register"}</h2>
 
-      <form
-        onSubmit={handleSubmit}
-        style={{ display: "flex", flexDirection: "column", gap: "1rem" }}
-      >
+      <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
         {mode === "register" && (
           <>
             <input
@@ -95,13 +91,7 @@ function LoginRegisterPage() {
         />
 
         <button type="submit" disabled={submitting}>
-          {submitting
-            ? mode === "login"
-              ? "Logging in..."
-              : "Registering..."
-            : mode === "login"
-            ? "Login"
-            : "Register"}
+          {submitting ? (mode === "login" ? "Logging in..." : "Registering...") : mode === "login" ? "Login" : "Register"}
         </button>
       </form>
 
