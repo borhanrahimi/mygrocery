@@ -9,8 +9,10 @@ function CategoryPage() {
   const { setCount } = useContext(CartContext);
   const userId = localStorage.getItem("userId");
 
+  const API_URL = process.env.REACT_APP_API_URL;
+
   useEffect(() => {
-    fetch("/api/products")
+    fetch(`${API_URL}/api/products`)
       .then((res) => res.json())
       .then((data) => {
         const filtered = data.filter(
@@ -22,7 +24,7 @@ function CategoryPage() {
         console.error("❌ Failed to fetch products:", err);
         alert("❌ Could not load products");
       });
-  }, [categoryName]);
+  }, [categoryName, API_URL]);
 
   const addToCart = (productId) => {
     if (!userId) {
@@ -30,7 +32,7 @@ function CategoryPage() {
       return;
     }
 
-    fetch("/api/cart/add", {
+    fetch(`${API_URL}/api/cart/add`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ userId, productId }),
@@ -41,7 +43,7 @@ function CategoryPage() {
       })
       .then((data) => {
         const total = data.items.reduce((sum, item) => sum + item.quantity, 0);
-        setCount(total); // ✅ update cart count silently
+        setCount(total);
       })
       .catch((err) => {
         console.error("❌ Add to cart error:", err);
