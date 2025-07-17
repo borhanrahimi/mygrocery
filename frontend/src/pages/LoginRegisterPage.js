@@ -34,12 +34,12 @@ function LoginRegisterPage() {
         body: JSON.stringify(payload),
       });
 
-      const data = await res.json().catch(() => ({}));
+      const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Something went wrong");
 
-      localStorage.setItem("userId", data.userId);
-      login(data.userId);
-      navigate("/");
+      login(data.userId); // ✅ Save in context
+      navigate("/");      // ✅ Redirect to home
+
     } catch (err) {
       console.error("❌ Auth error:", err);
       alert(err.message);
@@ -55,40 +55,14 @@ function LoginRegisterPage() {
       <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
         {mode === "register" && (
           <>
-            <input
-              value={firstName}
-              onChange={(e) => setFirstName(e.target.value)}
-              placeholder="First Name"
-              required
-            />
-            <input
-              value={lastName}
-              onChange={(e) => setLastName(e.target.value)}
-              placeholder="Last Name"
-              required
-            />
-            <input
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              placeholder="Phone"
-              required
-            />
+            <input value={firstName} onChange={(e) => setFirstName(e.target.value)} placeholder="First Name" required />
+            <input value={lastName} onChange={(e) => setLastName(e.target.value)} placeholder="Last Name" required />
+            <input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="Phone" required />
           </>
         )}
 
-        <input
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          placeholder="Email"
-          required
-        />
-        <input
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          placeholder="Password"
-          required
-        />
+        <input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email" required />
+        <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Password" required />
 
         <button type="submit" disabled={submitting}>
           {submitting ? (mode === "login" ? "Logging in..." : "Registering...") : mode === "login" ? "Login" : "Register"}
