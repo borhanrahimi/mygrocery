@@ -10,11 +10,12 @@ app.use(cors({
   origin: function (origin, callback) {
     if (!origin) return callback(null, true); // ✅ Allow Postman & direct calls
 
-    const allowedOrigins = [
-      'http://localhost:3000', // local dev
-      'https://mygrocery-frontend.vercel.app', // production frontend
-      'https://mygrocery-2n9p5bg55-borhans-projects-5831680d.vercel.app' // your preview frontend
-    ];
+const allowedOrigins = [
+  'http://localhost:3000',
+  'https://mygrocery.vercel.app',
+  'https://mygrocery-git-main-borhans-projects-5831680d.vercel.app',
+  'https://mygrocery-r02p88t75-borhans-projects-5831680d.vercel.app'
+];
 
     const isAllowed =
       allowedOrigins.includes(origin) ||
