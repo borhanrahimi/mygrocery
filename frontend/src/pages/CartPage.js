@@ -8,8 +8,10 @@ function CartPage() {
   const { setCount } = useContext(CartContext);
   const navigate = useNavigate();
 
+  const API_URL = process.env.REACT_APP_API_URL;
+
   const loadCart = useCallback(() => {
-    fetch(`/api/cart/${userId}`)
+    fetch(`${API_URL}/api/cart/${userId}`)
       .then((res) => res.json())
       .then((data) => {
         const items = data.items
@@ -23,8 +25,12 @@ function CartPage() {
 
         const totalCount = items.reduce((sum, item) => sum + item.quantity, 0);
         setCount(totalCount);
+      })
+      .catch((err) => {
+        console.error("❌ Failed to load cart:", err);
+        alert("❌ Could not load cart.");
       });
-  }, [userId, setCount]);
+  }, [userId, setCount, API_URL]);
 
   useEffect(() => {
     if (userId) {
@@ -33,11 +39,16 @@ function CartPage() {
   }, [userId, loadCart]);
 
   const removeFromCart = (productId) => {
-    fetch("/api/cart/remove", {
+    fetch(`${API_URL}/api/cart/remove`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ userId, productId }),
-    }).then(loadCart);
+    })
+      .then(loadCart)
+      .catch((err) => {
+        console.error("❌ Remove from cart error:", err);
+        alert("❌ Could not remove item.");
+      });
   };
 
   const handleCheckout = () => {
@@ -46,7 +57,7 @@ function CartPage() {
       return;
     }
 
-    fetch("/api/orders/create", {
+    fetch(`${API_URL}/api/orders/create`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ userId }),
@@ -62,13 +73,13 @@ function CartPage() {
         }
       })
       .catch((err) => {
-        console.error("Checkout error:", err);
+        console.error("❌ Checkout error:", err);
         alert("❌ Something went wrong.");
       });
   };
 
   if (!userId) {
-    return <p>Please <a href="/login">log in</a> to view your cart.</p>;
+    return <p>Please <a href="/auth">log in</a> to view your cart.</p>;
   }
 
   const totalPrice = cart.reduce(

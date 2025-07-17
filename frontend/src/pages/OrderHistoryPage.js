@@ -1,17 +1,19 @@
 import React, { useEffect, useState, useContext } from "react";
 import axios from "axios";
 import { AuthContext } from "../context/AuthContext";
-import "./OrderHistoryPage.css"; // Make sure to create this CSS file
+import "./OrderHistoryPage.css";
 
 const OrderHistoryPage = () => {
   const { user } = useContext(AuthContext);
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  const API_URL = process.env.REACT_APP_API_URL;
+
   useEffect(() => {
     if (user) {
       axios
-        .get(`/api/orders/${user}`)
+        .get(`${API_URL}/api/orders/${user}`)
         .then((res) => {
           setOrders(res.data);
           setLoading(false);
@@ -23,7 +25,7 @@ const OrderHistoryPage = () => {
     } else {
       setLoading(false);
     }
-  }, [user]);
+  }, [user, API_URL]);
 
   if (loading) return <p>Loading order history...</p>;
   if (!orders.length) return <p>No orders found.</p>;

@@ -13,9 +13,11 @@ const SearchResultsPage = () => {
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  const API_URL = process.env.REACT_APP_API_URL;
+
   useEffect(() => {
     if (query) {
-      fetch(`/api/products/search?q=${query}`)
+      fetch(`${API_URL}/api/products/search?q=${query}`)
         .then((res) => res.json())
         .then((data) => {
           setResults(data);
@@ -29,7 +31,7 @@ const SearchResultsPage = () => {
       setResults([]);
       setLoading(false);
     }
-  }, [query]);
+  }, [query, API_URL]);
 
   const handleAddToCart = async (productId) => {
     if (!user) {
@@ -38,7 +40,7 @@ const SearchResultsPage = () => {
     }
 
     try {
-      await fetch("/api/cart/add", {
+      await fetch(`${API_URL}/api/cart/add`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -48,8 +50,7 @@ const SearchResultsPage = () => {
         }),
       });
 
-      // Refresh cart count
-      const res = await fetch(`/api/cart/${user}`);
+      const res = await fetch(`${API_URL}/api/cart/${user}`);
       const data = await res.json();
       const totalItems = data.items?.reduce((acc, item) => acc + item.quantity, 0);
       setCount(totalItems || 0);

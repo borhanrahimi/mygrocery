@@ -13,9 +13,11 @@ function Header() {
   const [suggestions, setSuggestions] = useState([]);
   const navigate = useNavigate();
 
+  const API_URL = process.env.REACT_APP_API_URL;
+
   useEffect(() => {
     if (user) {
-      fetch(`/api/auth/profile/${user}`)
+      fetch(`${API_URL}/api/auth/profile/${user}`)
         .then((res) => res.json())
         .then((data) => setFirstName(data.firstName || ""))
         .catch(() => setFirstName(""));
@@ -23,7 +25,7 @@ function Header() {
       setFirstName("");
       setShowDropdown(false);
     }
-  }, [user]);
+  }, [user, API_URL]);
 
   const toggleDropdown = () => {
     if (user) {
@@ -48,7 +50,7 @@ function Header() {
     setSearchQuery(value);
 
     if (value.trim()) {
-      fetch("/api/products")
+      fetch(`${API_URL}/api/products/search?q=${value}`)
         .then((res) => res.json())
         .then((products) => {
           const matches = products.filter((p) =>
@@ -81,7 +83,7 @@ function Header() {
       return;
     }
 
-    fetch("/api/cart/add", {
+    fetch(`${API_URL}/api/cart/add`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -95,7 +97,7 @@ function Header() {
       .then((res) => res.json())
       .then(() => {
         setSuggestions([]);
-        updateCartCount(); // ⬅️ instantly refresh cart count
+        updateCartCount();
       })
       .catch((err) => {
         console.error("❌ Add to cart failed:", err);

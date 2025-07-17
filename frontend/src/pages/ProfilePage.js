@@ -6,6 +6,7 @@ import "./ProfilePage.css";
 function ProfilePage() {
   const { user, logout } = useContext(AuthContext);
   const navigate = useNavigate();
+  const API_URL = process.env.REACT_APP_API_URL;
 
   const [formData, setFormData] = useState({
     firstName: "",
@@ -20,7 +21,7 @@ function ProfilePage() {
 
   useEffect(() => {
     if (user) {
-      fetch(`/api/auth/profile/${user}`)
+      fetch(`${API_URL}/api/auth/profile/${user}`)
         .then((res) => res.json())
         .then((data) => {
           setFormData({
@@ -36,7 +37,7 @@ function ProfilePage() {
           console.error("❌ Failed to load profile:", err);
         });
     }
-  }, [user]);
+  }, [user, API_URL]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -51,7 +52,7 @@ function ProfilePage() {
     setSaving(true);
 
     try {
-      const res = await fetch(`/api/auth/profile/${user}`, {
+      const res = await fetch(`${API_URL}/api/auth/profile/${user}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
