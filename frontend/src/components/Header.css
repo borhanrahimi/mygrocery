@@ -1,3 +1,33 @@
+/* Header Styles */
+.header {
+  background-color: black;
+  color: white;
+  padding: 1rem 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+
+.logo {
+  font-size: 1.8rem;
+  font-weight: bold;
+}
+
+.search-wrapper {
+  position: relative;
+  width: 100%;
+  max-width: 500px;
+  margin: 0 1rem;
+}
+
+.cart-icon {
+  font-size: 1.5rem;
+  color: white;
+  cursor: pointer;
+}
+
+/* Order History */
 .order-history-container {
   max-width: 800px;
   margin: 2rem auto;
@@ -63,6 +93,8 @@
   color: #666;
   font-size: 14px;
 }
+
+/* User Menu */
 .user-menu {
   position: relative;
 }
@@ -72,7 +104,7 @@
   top: 120%;
   right: 0;
   background: white;
-  color: black; 
+  color: black;
   border: 1px solid #ddd;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   border-radius: 8px;
@@ -99,12 +131,8 @@
 .dropdown-item.logout {
   color: crimson;
 }
-.search-wrapper {
-  position: relative;
-  width: 100%;
-  max-width: 500px;
-}
 
+/* Search Suggestions */
 .search-suggestions {
   position: absolute;
   top: 100%;
@@ -125,8 +153,8 @@
 .search-suggestions li {
   padding: 0.5rem 1rem;
   cursor: pointer;
-  color: black; /* ✅ Add this line */
-  background-color: white; /* Optional, but helps contrast */
+  color: black;
+  background-color: white;
 }
 
 .suggestion-item {
@@ -154,4 +182,21 @@
   font-size: 1rem;
   cursor: pointer;
   color: green;
+}
+
+/* Mobile Responsive */
+@media (max-width: 600px) {
+  .header {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .search-wrapper {
+    margin: 1rem 0;
+  }
+
+  .cart-icon {
+    margin-top: 0.5rem;
+  }
 }

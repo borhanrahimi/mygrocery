@@ -1,2 +1,10 @@
-### Get All Products
-GET http://localhost:5000/api/products
+POST https://mygrocery-backend.onrender.com/api/products
+Content-Type: application/json
+
+{
+  "name": "Banana",
+  "price": 0.79,
+  "category": "Fruit",
+  "image": "https://dtgxwmigmg3gc.cloudfront.net/imagery/assets/derivations/icon/512/512/true/eyJpZCI6IjIzNjFhNjAyM2YxMmY1OGM5NzcyNTgwNjM3YWZiNjAxLmpwZyIsInN0b3JhZ2UiOiJwdWJsaWNfc3RvcmUifQ?signature=7d201f5f9b7458fa9243e619222f7453c4266c06112ca287d01adaf32bdb2d1f",
+  "stockQuantity": 120
+}
