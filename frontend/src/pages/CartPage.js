@@ -82,10 +82,13 @@ function CartPage() {
     return <p>Please <a href="/auth">log in</a> to view your cart.</p>;
   }
 
-  const totalPrice = cart.reduce(
+  const subtotal = cart.reduce(
     (sum, item) => sum + (item.price || 0) * item.quantity,
     0
   );
+  const taxRate = 0.0825;
+  const taxAmount = subtotal * taxRate;
+  const totalWithTax = subtotal + taxAmount;
 
   return (
     <div style={{ padding: "1rem" }}>
@@ -107,7 +110,10 @@ function CartPage() {
                   borderBottom: "1px solid #ddd",
                 }}
               >
-                <div className="product-info" style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
+                <div
+                  className="product-info"
+                  style={{ display: "flex", alignItems: "center", gap: "1rem" }}
+                >
                   <img
                     src={item.image}
                     alt={item.name}
@@ -115,7 +121,8 @@ function CartPage() {
                     style={{ width: "60px", height: "60px", objectFit: "cover" }}
                   />
                   <div>
-                    <strong>{item.name}</strong><br />
+                    <strong>{item.name}</strong>
+                    <br />
                     ${item.price?.toFixed(2) || "0.00"} × {item.quantity} = $
                     {(item.price * item.quantity).toFixed(2)}
                   </div>
@@ -131,8 +138,14 @@ function CartPage() {
           </ul>
 
           <h3 style={{ textAlign: "right", marginTop: "1rem" }}>
-            Total: ${totalPrice.toFixed(2)}
+            Subtotal: ${subtotal.toFixed(2)}
           </h3>
+          <h3 style={{ textAlign: "right" }}>
+            Tax: ${taxAmount.toFixed(2)}
+          </h3>
+          <h2 style={{ textAlign: "right" }}>
+            Total: ${totalWithTax.toFixed(2)}
+          </h2>
 
           <button
             className="add-btn"
