@@ -1,25 +1,28 @@
+// Import React hooks and required context/providers
 import React, { useEffect, useState, useContext, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { CartContext } from "../context/CartContext";
 
 function CartPage() {
+  // Local state for cart items
   const [cart, setCart] = useState([]);
-  const userId = localStorage.getItem("userId");
-  const { setCount } = useContext(CartContext);
-  const navigate = useNavigate();
+  const userId = localStorage.getItem("userId");  // Get logged-in user's ID
+  const { setCount } = useContext(CartContext);  // Access cart count from global context
+  const navigate = useNavigate();  // Hook for programmatic navigation
 
   const API_URL = process.env.REACT_APP_API_URL;
 
+  // Fetch cart items from backend and update state/context
   const loadCart = useCallback(() => {
     fetch(`${API_URL}/api/cart/${userId}`)
       .then((res) => res.json())
       .then((data) => {
         const items = data.items
-          .filter((i) => i.productId)
+          .filter((i) => i.productId)  // Filter out invalid products
           .map((i) => ({
             ...i.productId,
             quantity: i.quantity,
-            rawProductId: i.productId._id,
+            rawProductId: i.productId._id,  // Keep original product ID for removal
           }));
         setCart(items);
 
@@ -32,25 +35,28 @@ function CartPage() {
       });
   }, [userId, setCount, API_URL]);
 
+  // Load cart on component mount
   useEffect(() => {
     if (userId) {
       loadCart();
     }
   }, [userId, loadCart]);
 
+  // Remove item from cart and refresh list
   const removeFromCart = (productId) => {
     fetch(`${API_URL}/api/cart/remove`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ userId, productId }),
     })
-      .then(loadCart)
+      .then(loadCart)  // Reload cart after removal
       .catch((err) => {
         console.error("❌ Remove from cart error:", err);
         alert("❌ Could not remove item.");
       });
   };
 
+  // Handle checkout process and navigate on success
   const handleCheckout = () => {
     if (!userId) {
       alert("You must be logged in to checkout.");
@@ -78,10 +84,12 @@ function CartPage() {
       });
   };
 
+  // Redirect non-logged-in users to login
   if (!userId) {
     return <p>Please <a href="/auth">log in</a> to view your cart.</p>;
   }
 
+  // Cart calculations
   const subtotal = cart.reduce(
     (sum, item) => sum + (item.price || 0) * item.quantity,
     0
@@ -93,6 +101,8 @@ function CartPage() {
   return (
     <div style={{ padding: "1rem" }}>
       <h2>Your Cart</h2>
+
+      {/* Display empty cart message or cart items */}
       {cart.length === 0 ? (
         <p>Your cart is empty.</p>
       ) : (
@@ -137,6 +147,7 @@ function CartPage() {
             ))}
           </ul>
 
+          {/* Cart summary */}
           <h3 style={{ textAlign: "right", marginTop: "1rem" }}>
             Subtotal: ${subtotal.toFixed(2)}
           </h3>
@@ -147,6 +158,7 @@ function CartPage() {
             Total: ${totalWithTax.toFixed(2)}
           </h2>
 
+          {/* Checkout button */}
           <button
             className="add-btn"
             onClick={handleCheckout}
