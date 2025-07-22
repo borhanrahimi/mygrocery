@@ -3,7 +3,7 @@ const Order = require("../models/Order");
 
 exports.createOrder = async (req, res) => {
   const { userId } = req.body;
-  console.log("✅ Checkout request for:", userId);
+  console.log("Checkout request for:", userId);
 
   try {
     const cart = await Cart.findOne({ userId }).populate("items.productId");
@@ -36,26 +36,38 @@ exports.createOrder = async (req, res) => {
     await order.save();
     await Cart.deleteOne({ userId });
 
-    console.log("✅ Order created:", order._id);
+    console.log(" Order created:", order._id);
     res.json({ orderId: order._id });
 
   } catch (err) {
-    console.error("❌ Order error:", err);
+    console.error("Order error:", err);
     res.status(500).json({ error: "Server error" });
   }
 };
 
+const Order = require("../models/Order");
+
 exports.getOrdersByUser = async (req, res) => {
   const { userId } = req.params;
+  const { sortBy = "timestamp", order = "desc" } = req.query;
 
   try {
+    // Validate and construct sort options
+    const sortOptions = {};
+    if (["timestamp", "totalAmount"].includes(sortBy)) {
+      sortOptions[sortBy] = order === "asc" ? 1 : -1;
+    } else {
+      // fallback in case of invalid sortBy
+      sortOptions["timestamp"] = -1;
+    }
+
     const orders = await Order.find({ userId })
-      .populate("items.productId") // ✅ This will include full product data
-      .sort({ timestamp: -1 });    // Optional: latest orders first
+      .populate("items.productId")
+      .sort(sortOptions);
 
     res.json(orders);
   } catch (err) {
-    console.error("❌ Error fetching orders:", err);
+    console.error("Error fetching orders:", err);
     res.status(500).json({ error: "Could not retrieve orders" });
   }
 };
