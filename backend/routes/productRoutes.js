@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const Product = require('../models/Product');
 
-// ✅ GET all products OR filter by category
+// GET all products OR filter by category
 router.get('/', async (req, res) => {
   try {
     const { category } = req.query;
@@ -14,7 +14,7 @@ router.get('/', async (req, res) => {
   }
 });
 
-// ✅ POST create a product
+//  POST create a product
 router.post('/', async (req, res) => {
   try {
     const newProduct = new Product(req.body);
@@ -25,7 +25,7 @@ router.post('/', async (req, res) => {
   }
 });
 
-// ✅ GET /api/products/search?q=...
+//  GET /api/products/search?q=...
 router.get('/search', async (req, res) => {
   const q = req.query.q;
   try {
@@ -37,5 +37,27 @@ router.get('/search', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
+//  GET all products with optional sorting
+router.get('/', async (req, res) => {
+  try {
+    const { category, sortBy, order = 'asc' } = req.query;
+
+    const filter = category ? { category } : {};
+
+    const sortOptions = {};
+    if (sortBy === 'price') {
+      sortOptions.price = order === 'desc' ? -1 : 1;
+    } else if (sortBy === 'availability') {
+      sortOptions.available = order === 'desc' ? -1 : 1;
+    }
+
+    const products = await Product.find(filter).sort(sortOptions);
+    res.json(products);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 
 module.exports = router;
