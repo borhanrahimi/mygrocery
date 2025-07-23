@@ -45,8 +45,6 @@ exports.createOrder = async (req, res) => {
   }
 };
 
-
-
 exports.getOrdersByUser = async (req, res) => {
   const { userId } = req.params;
   const { sortBy = "timestamp", order = "desc" } = req.query;
