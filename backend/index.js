@@ -12,6 +12,7 @@ app.use(cors({
 
 const allowedOrigins = [
   'http://localhost:3000',
+  'http://localhost:5000',
   'https://mygrocery.vercel.app',
   'https://mygrocery-git-main-borhans-projects-5831680d.vercel.app',
   'https://mygrocery-r02p88t75-borhans-projects-5831680d.vercel.app'

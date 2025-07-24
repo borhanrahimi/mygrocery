@@ -9,6 +9,10 @@ const orderSchema = new mongoose.Schema({
     }
   ],
   totalAmount: { type: Number, required: true },
+   // Delivery options
+  deliveryOption: { type: String, required: true, enum: ['standard', 'express', 'pickup', 'carryout'] },
+  deliveryFee: { type: Number, required: true },
+  
   status: { type: String, default: "Processing" },
   timestamp: { type: Date, default: Date.now }
 });
