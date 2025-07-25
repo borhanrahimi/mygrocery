@@ -8,12 +8,15 @@ const OrderHistoryPage = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  const [sortBy, setSortBy] = useState("timestamp"); // default sort: date
+  const [order, setOrder] = useState("desc"); // default: newest first
+
   const API_URL = process.env.REACT_APP_API_URL;
 
   useEffect(() => {
     if (user) {
       axios
-        .get(`${API_URL}/api/orders/${user}`)
+        .get(`${API_URL}/api/orders/${user}?sortBy=${sortBy}&order=${order}`)
         .then((res) => {
           setOrders(res.data);
           setLoading(false);
@@ -25,7 +28,7 @@ const OrderHistoryPage = () => {
     } else {
       setLoading(false);
     }
-  }, [user, API_URL]);
+  }, [user, API_URL, sortBy, order]);
 
   if (loading) return <p>Loading order history...</p>;
   if (!orders.length) return <p>No orders found.</p>;
@@ -33,6 +36,25 @@ const OrderHistoryPage = () => {
   return (
     <div className="order-history-container">
       <h2>🧾 Your Order History</h2>
+
+      {/* Sort dropdowns */}
+      <div style={{ margin: "1rem 0" }}>
+        <label style={{ fontWeight: "bold", marginRight: "0.5rem" }}>Sort by:</label>
+        <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
+          <option value="timestamp">Date</option>
+          <option value="totalAmount">Total Price</option>
+        </select>
+
+        <select
+          value={order}
+          onChange={(e) => setOrder(e.target.value)}
+          style={{ marginLeft: "1rem" }}
+        >
+          <option value="desc">Descending</option>
+          <option value="asc">Ascending</option>
+        </select>
+      </div>
+
       {orders.map((order) => {
         const subtotal = order.items.reduce(
           (sum, item) => sum + item.productId.price * item.quantity,
