@@ -73,8 +73,6 @@ exports.createOrder = async (req, res) => {
   }
 };
 
-const Order = require("../models/Order");
-
 // Note: The redundant 'const Order' line below has been removed.
 exports.getOrdersByUser = async (req, res) => {
   const { userId } = req.params;
