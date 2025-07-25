@@ -4,11 +4,19 @@ import { CartContext } from "../context/CartContext";
 
 function CartPage() {
   const [cart, setCart] = useState([]);
+  const [deliveryOption, setDeliveryOption] = useState("standard");
+  const [showDeliveryMenu, setShowDeliveryMenu] = useState(false);
   const userId = localStorage.getItem("userId");
   const { setCount } = useContext(CartContext);
   const navigate = useNavigate();
 
   const API_URL = process.env.REACT_APP_API_URL;
+
+  const deliveryOptions = {
+    standard: { label: "Standard (3–5 days)", price: 5 },
+    express: { label: "Express (1–2 days)", price: 15 },
+    pickup: { label: "Pickup (Free)", price: 0 }
+  };
 
   const loadCart = useCallback(() => {
     fetch(`${API_URL}/api/cart/${userId}`)
@@ -60,7 +68,7 @@ function CartPage() {
     fetch(`${API_URL}/api/orders/create`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userId }),
+      body: JSON.stringify({ userId, deliveryOption }),
     })
       .then((res) => res.json())
       .then((data) => {
@@ -86,9 +94,11 @@ function CartPage() {
     (sum, item) => sum + (item.price || 0) * item.quantity,
     0
   );
+
   const taxRate = 0.0825;
   const taxAmount = subtotal * taxRate;
-  const totalWithTax = subtotal + taxAmount;
+  const deliveryFee = deliveryOptions[deliveryOption].price;
+  const totalWithTax = subtotal + taxAmount + deliveryFee;
 
   return (
     <div style={{ padding: "1rem" }}>
@@ -137,11 +147,69 @@ function CartPage() {
             ))}
           </ul>
 
+          {/* Dropdown delivery option */}
+          <div style={{ marginTop: "2rem", position: "relative", maxWidth: "300px" }}>
+            <label style={{ fontWeight: "bold" }}>Delivery Option:</label>
+            <div
+              onClick={() => setShowDeliveryMenu(!showDeliveryMenu)}
+              style={{
+                border: "1px solid #ccc",
+                borderRadius: "6px",
+                padding: "0.5rem",
+                cursor: "pointer",
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                background: "#f9f9f9"
+              }}
+            >
+              {deliveryOptions[deliveryOption].label} – ${deliveryOptions[deliveryOption].price.toFixed(2)}
+              <span style={{ marginLeft: "1rem" }}>{showDeliveryMenu ? "▲" : "▼"}</span>
+            </div>
+
+            {showDeliveryMenu && (
+              <div
+                style={{
+                  position: "absolute",
+                  top: "100%",
+                  left: 0,
+                  width: "100%",
+                  background: "#fff",
+                  border: "1px solid #ccc",
+                  borderTop: "none",
+                  zIndex: 10,
+                }}
+              >
+                {Object.entries(deliveryOptions).map(([key, option]) => (
+                  <div
+                    key={key}
+                    onClick={() => {
+                      setDeliveryOption(key);
+                      setShowDeliveryMenu(false);
+                    }}
+                    style={{
+                      padding: "0.5rem",
+                      cursor: "pointer",
+                      background: deliveryOption === key ? "#e6f7ff" : "#fff",
+                      borderBottom: "1px solid #eee"
+                    }}
+                  >
+                    {option.label} – ${option.price.toFixed(2)}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Summary */}
           <h3 style={{ textAlign: "right", marginTop: "1rem" }}>
             Subtotal: ${subtotal.toFixed(2)}
           </h3>
           <h3 style={{ textAlign: "right" }}>
             Tax: ${taxAmount.toFixed(2)}
+          </h3>
+          <h3 style={{ textAlign: "right" }}>
+            Delivery Fee: ${deliveryFee.toFixed(2)}
           </h3>
           <h2 style={{ textAlign: "right" }}>
             Total: ${totalWithTax.toFixed(2)}
