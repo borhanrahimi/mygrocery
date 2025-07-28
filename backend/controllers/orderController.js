@@ -2,9 +2,8 @@ const Cart = require("../models/ShoppingCart");
 const Order = require("../models/Order");
 
 exports.createOrder = async (req, res) => {
-  //  GET THE NEW 'deliveryOption' FROM THE REQUEST BODY, along with userId
-  const { userId, deliveryOption } = req.body;
-  console.log("Checkout request for:", userId, "with delivery:", deliveryOption);
+  const { userId, deliveryOption, discountCode } = req.body;
+  console.log("📦 Checkout request for:", userId, "| Delivery:", deliveryOption, "| Discount:", discountCode);
 
   try {
     const cart = await Cart.findOne({ userId }).populate("items.productId");
@@ -14,48 +13,60 @@ exports.createOrder = async (req, res) => {
     }
 
     const validItems = cart.items.filter(item => item.productId);
-
     if (validItems.length === 0) {
       return res.status(400).json({ error: "No valid items in cart" });
     }
 
-    // CALCULATE THE BASE TOTAL AMOUNT FROM THE CART
-    let totalAmount = validItems.reduce((sum, item) => {
-      // Ensure productId and price exist before multiplying
-      return sum + (item.productId ? item.productId.price * item.quantity : 0);
+    // ✅ Step 1: Calculate subtotal
+    const subtotal = validItems.reduce((sum, item) => {
+      return sum + item.productId.price * item.quantity;
     }, 0);
 
-    //  DETERMINE DELIVERY FEE BASED ON THE OPTION
+    // ✅ Step 2: Apply discount
+    let discountAmount = 0;
+    if (discountCode && discountCode.toUpperCase() === "STUDENT") {
+      discountAmount = subtotal * 0.10;
+    }
+
+    // ✅ Step 3: Calculate tax on discounted subtotal
+    const discountedSubtotal = subtotal - discountAmount;
+    const taxAmount = discountedSubtotal * 0.0825;
+
+    // ✅ Step 4: Set delivery fee
     let deliveryFee = 0;
     switch (deliveryOption) {
-      case 'standard':
-        deliveryFee = 5.00;
-        break;
-      case 'express':
-        deliveryFee = 15.00;
-        break;
-      case 'pickup':
-      case 'carryout':
-        deliveryFee = 0;
-        break;
-      default:
-        // This handles cases where the user sends an invalid delivery option
-        return res.status(400).json({ error: "Invalid delivery option" });
+      case "standard": deliveryFee = 5.00; break;
+      case "express": deliveryFee = 15.00; break;
+      case "pickup":
+      case "carryout": deliveryFee = 0; break;
+      default: return res.status(400).json({ error: "Invalid delivery option" });
     }
-    
-    //  ADD THE DELIVERY FEE TO THE TOTAL AMOUNT
-    totalAmount += deliveryFee;
 
+    // ✅ Step 5: Final total
+    let totalAmount = discountedSubtotal + taxAmount + deliveryFee;
+    if (totalAmount < 0) totalAmount = 0;
+
+    // ✅ Round numbers
+    const roundedSubtotal = Number(subtotal.toFixed(2));
+    const roundedDiscountAmount = Number(discountAmount.toFixed(2));
+    const roundedTaxAmount = Number(taxAmount.toFixed(2));
+    const roundedDeliveryFee = Number(deliveryFee.toFixed(2));
+    const roundedTotalAmount = Number(totalAmount.toFixed(2));
+
+    // ✅ Save to DB
     const order = new Order({
       userId,
       items: validItems.map(item => ({
         productId: item.productId._id,
         quantity: item.quantity
       })),
-      totalAmount,
-      // ADD THE NEW FIELDS TO THE ORDER OBJECT
+      subtotal: roundedSubtotal,
+      discountCode,
+      discountAmount: roundedDiscountAmount,
+      taxAmount: roundedTaxAmount,
       deliveryOption,
-      deliveryFee,
+      deliveryFee: roundedDeliveryFee,
+      totalAmount: roundedTotalAmount,
       status: "Processing",
       timestamp: new Date()
     });
@@ -63,17 +74,33 @@ exports.createOrder = async (req, res) => {
     await order.save();
     await Cart.deleteOne({ userId });
 
-    console.log("✅ Order created:", order._id);
-    // Include new details in the response for confirmation
-    res.json({ orderId: order._id, totalAmount: order.totalAmount, deliveryFee: order.deliveryFee });
+    // ✅ Log order response before sending to frontend
+    console.log("🧾 Sending order to frontend:", {
+      orderId: order._id,
+      subtotal: roundedSubtotal,
+      discountCode,
+      discountAmount: roundedDiscountAmount,
+      taxAmount: roundedTaxAmount,
+      deliveryFee: roundedDeliveryFee,
+      totalAmount: roundedTotalAmount
+    });
+
+    res.json({
+      orderId: order._id,
+      subtotal: roundedSubtotal,
+      discountCode,
+      discountAmount: roundedDiscountAmount,
+      taxAmount: roundedTaxAmount,
+      deliveryFee: roundedDeliveryFee,
+      totalAmount: roundedTotalAmount
+    });
 
   } catch (err) {
-    console.error("Order error:", err);
+    console.error("❌ Order creation error:", err);
     res.status(500).json({ error: "Server error" });
   }
 };
 
-// Note: The redundant 'const Order' line below has been removed.
 exports.getOrdersByUser = async (req, res) => {
   const { userId } = req.params;
   const { sortBy = "timestamp", order = "desc" } = req.query;
@@ -92,7 +119,7 @@ exports.getOrdersByUser = async (req, res) => {
 
     res.json(orders);
   } catch (err) {
-    console.error("Error fetching orders:", err);
+    console.error("❌ Error fetching orders:", err);
     res.status(500).json({ error: "Could not retrieve orders" });
   }
 };

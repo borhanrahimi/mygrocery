@@ -1,3 +1,4 @@
+// CartPage.js
 import React, { useEffect, useState, useContext, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { CartContext } from "../context/CartContext";
@@ -6,6 +7,7 @@ function CartPage() {
   const [cart, setCart] = useState([]);
   const [deliveryOption, setDeliveryOption] = useState("standard");
   const [showDeliveryMenu, setShowDeliveryMenu] = useState(false);
+  const [discountCode, setDiscountCode] = useState("");
   const userId = localStorage.getItem("userId");
   const { setCount } = useContext(CartContext);
   const navigate = useNavigate();
@@ -15,7 +17,7 @@ function CartPage() {
   const deliveryOptions = {
     standard: { label: "Standard (3–5 days)", price: 5 },
     express: { label: "Express (1–2 days)", price: 15 },
-    pickup: { label: "Pickup (Free)", price: 0 }
+    pickup: { label: "Pickup (Free)", price: 0 },
   };
 
   const loadCart = useCallback(() => {
@@ -30,7 +32,6 @@ function CartPage() {
             rawProductId: i.productId._id,
           }));
         setCart(items);
-
         const totalCount = items.reduce((sum, item) => sum + item.quantity, 0);
         setCount(totalCount);
       })
@@ -68,14 +69,15 @@ function CartPage() {
     fetch(`${API_URL}/api/orders/create`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userId, deliveryOption }),
+      body: JSON.stringify({ userId, deliveryOption, discountCode }),
     })
       .then((res) => res.json())
       .then((data) => {
         if (data.orderId) {
           setCart([]);
           setCount(0);
-          navigate("/checkout-success");
+          // ✅ Pass order summary to checkout success page
+          navigate("/checkout-success", { state: data });
         } else {
           alert("❌ Error placing order.");
         }
@@ -94,11 +96,12 @@ function CartPage() {
     (sum, item) => sum + (item.price || 0) * item.quantity,
     0
   );
-
-  const taxRate = 0.0825;
-  const taxAmount = subtotal * taxRate;
+  const isStudent = discountCode.trim().toLowerCase() === "student";
+  const discount = isStudent ? subtotal * 0.1 : 0;
+  const discountedSubtotal = subtotal - discount;
+  const taxAmount = discountedSubtotal * 0.0825;
   const deliveryFee = deliveryOptions[deliveryOption].price;
-  const totalWithTax = subtotal + taxAmount + deliveryFee;
+  const totalWithTax = discountedSubtotal + taxAmount + deliveryFee;
 
   return (
     <div style={{ padding: "1rem" }}>
@@ -111,7 +114,6 @@ function CartPage() {
             {cart.map((item) => (
               <li
                 key={item.rawProductId}
-                className="product-item"
                 style={{
                   display: "flex",
                   justifyContent: "space-between",
@@ -120,14 +122,10 @@ function CartPage() {
                   borderBottom: "1px solid #ddd",
                 }}
               >
-                <div
-                  className="product-info"
-                  style={{ display: "flex", alignItems: "center", gap: "1rem" }}
-                >
+                <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
                   <img
                     src={item.image}
                     alt={item.name}
-                    className="product-img"
                     style={{ width: "60px", height: "60px", objectFit: "cover" }}
                   />
                   <div>
@@ -137,17 +135,14 @@ function CartPage() {
                     {(item.price * item.quantity).toFixed(2)}
                   </div>
                 </div>
-                <button
-                  className="remove-btn"
-                  onClick={() => removeFromCart(item.rawProductId)}
-                >
+                <button onClick={() => removeFromCart(item.rawProductId)}>
                   Remove
                 </button>
               </li>
             ))}
           </ul>
 
-          {/* Dropdown delivery option */}
+          {/* Delivery Option */}
           <div style={{ marginTop: "2rem", position: "relative", maxWidth: "300px" }}>
             <label style={{ fontWeight: "bold" }}>Delivery Option:</label>
             <div
@@ -160,7 +155,7 @@ function CartPage() {
                 display: "flex",
                 justifyContent: "space-between",
                 alignItems: "center",
-                background: "#f9f9f9"
+                background: "#f9f9f9",
               }}
             >
               {deliveryOptions[deliveryOption].label} – ${deliveryOptions[deliveryOption].price.toFixed(2)}
@@ -191,7 +186,7 @@ function CartPage() {
                       padding: "0.5rem",
                       cursor: "pointer",
                       background: deliveryOption === key ? "#e6f7ff" : "#fff",
-                      borderBottom: "1px solid #eee"
+                      borderBottom: "1px solid #eee",
                     }}
                   >
                     {option.label} – ${option.price.toFixed(2)}
@@ -201,13 +196,35 @@ function CartPage() {
             )}
           </div>
 
+          {/* Discount Code */}
+          <div style={{ marginTop: "1rem", maxWidth: "300px" }}>
+            <label htmlFor="discount">Discount Code:</label>
+            <input
+              id="discount"
+              type="text"
+              value={discountCode}
+              onChange={(e) => setDiscountCode(e.target.value)}
+              placeholder="Enter code (e.g. student)"
+              style={{
+                width: "100%",
+                padding: "0.5rem",
+                borderRadius: "6px",
+                border: "1px solid #ccc",
+                marginTop: "0.25rem"
+              }}
+            />
+          </div>
+
           {/* Summary */}
           <h3 style={{ textAlign: "right", marginTop: "1rem" }}>
             Subtotal: ${subtotal.toFixed(2)}
           </h3>
-          <h3 style={{ textAlign: "right" }}>
-            Tax: ${taxAmount.toFixed(2)}
-          </h3>
+          {isStudent && (
+            <h3 style={{ textAlign: "right", color: "green" }}>
+              Student Discount: -${discount.toFixed(2)}
+            </h3>
+          )}
+          <h3 style={{ textAlign: "right" }}>Tax: ${taxAmount.toFixed(2)}</h3>
           <h3 style={{ textAlign: "right" }}>
             Delivery Fee: ${deliveryFee.toFixed(2)}
           </h3>
@@ -216,7 +233,6 @@ function CartPage() {
           </h2>
 
           <button
-            className="add-btn"
             onClick={handleCheckout}
             style={{
               marginTop: "1rem",

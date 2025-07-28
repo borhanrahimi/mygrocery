@@ -8,11 +8,17 @@ const orderSchema = new mongoose.Schema({
       quantity: { type: Number, required: true }
     }
   ],
+  subtotal: { type: Number, required: true },
+  discountCode: { type: String },
+  discountAmount: { type: Number, default: 0 },
+  taxAmount: { type: Number, required: true },
   totalAmount: { type: Number, required: true },
-   // Delivery options
-  deliveryOption: { type: String, required: true, enum: ['standard', 'express', 'pickup', 'carryout'] },
+  deliveryOption: {
+    type: String,
+    required: true,
+    enum: ['standard', 'express', 'pickup', 'carryout']
+  },
   deliveryFee: { type: Number, required: true },
-  
   status: { type: String, default: "Processing" },
   timestamp: { type: Date, default: Date.now }
 });

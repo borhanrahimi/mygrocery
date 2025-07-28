@@ -8,8 +8,8 @@ const OrderHistoryPage = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const [sortBy, setSortBy] = useState("timestamp"); // default sort: date
-  const [order, setOrder] = useState("desc"); // default: newest first
+  const [sortBy, setSortBy] = useState("timestamp");
+  const [order, setOrder] = useState("desc");
 
   const API_URL = process.env.REACT_APP_API_URL;
 
@@ -60,8 +60,16 @@ const OrderHistoryPage = () => {
           (sum, item) => sum + item.productId.price * item.quantity,
           0
         );
-        const tax = subtotal * 0.0825;
-        const total = subtotal + tax;
+
+        const discountCode = order.discountCode;
+        const discountAmount =
+          discountCode?.toUpperCase() === "STUDENT" ? subtotal * 0.1 : 0;
+
+        const discountedSubtotal = subtotal - discountAmount;
+        const tax = discountedSubtotal * 0.0825;
+        const deliveryFee = order.deliveryFee || 0;
+        const total = discountedSubtotal + tax + deliveryFee;
+
         const totalQuantity = order.items.reduce(
           (sum, item) => sum + item.quantity,
           0
@@ -74,6 +82,9 @@ const OrderHistoryPage = () => {
               <p><strong>Date:</strong> {new Date(order.timestamp).toLocaleString()}</p>
               <p><strong>Status:</strong> {order.status || "N/A"}</p>
               <p><strong>Total Items:</strong> {totalQuantity}</p>
+              {discountCode && (
+                <p><strong>Discount Code:</strong> {discountCode}</p>
+              )}
             </div>
 
             <div className="order-items">
@@ -93,7 +104,11 @@ const OrderHistoryPage = () => {
 
             <div style={{ textAlign: "right", marginTop: "1rem" }}>
               <p><strong>Subtotal:</strong> ${subtotal.toFixed(2)}</p>
+              {discountAmount > 0 && (
+                <p><strong>Discount (10%):</strong> -${discountAmount.toFixed(2)}</p>
+              )}
               <p><strong>Tax (8.25%):</strong> ${tax.toFixed(2)}</p>
+              <p><strong>Delivery Fee:</strong> ${deliveryFee.toFixed(2)}</p>
               <p><strong>Total:</strong> ${total.toFixed(2)}</p>
             </div>
           </div>
