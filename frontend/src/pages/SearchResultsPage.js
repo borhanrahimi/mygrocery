@@ -11,7 +11,9 @@ const SearchResultsPage = () => {
   const query = new URLSearchParams(location.search).get("q") || "";
 
   const [results, setResults] = useState([]);
+  const [originalResults, setOriginalResults] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [sortOrder, setSortOrder] = useState("none");
 
   const API_URL = process.env.REACT_APP_API_URL;
 
@@ -20,7 +22,8 @@ const SearchResultsPage = () => {
       fetch(`${API_URL}/api/products/search?q=${query}`)
         .then((res) => res.json())
         .then((data) => {
-          setResults(data);
+          setOriginalResults(data);
+          setResults(data); // unsorted by default
           setLoading(false);
         })
         .catch((err) => {
@@ -28,12 +31,30 @@ const SearchResultsPage = () => {
           setLoading(false);
         });
     } else {
+      setOriginalResults([]);
       setResults([]);
       setLoading(false);
     }
   }, [query, API_URL]);
 
-  const handleAddToCart = async (productId) => {
+  useEffect(() => {
+    let sorted = [...originalResults];
+
+    if (sortOrder === "asc") {
+      sorted.sort((a, b) => a.price - b.price);
+    } else if (sortOrder === "desc") {
+      sorted.sort((a, b) => b.price - a.price);
+    }
+
+    setResults(sorted);
+  }, [sortOrder, originalResults]);
+
+  const handleAddToCart = async (product) => {
+    if (!product.available) {
+      alert("⚠️ This product is out of stock.");
+      return;
+    }
+
     if (!user) {
       window.location.href = "/auth";
       return;
@@ -45,7 +66,7 @@ const SearchResultsPage = () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           userId: user,
-          productId,
+          productId: product._id,
           quantity: 1,
         }),
       });
@@ -72,17 +93,41 @@ const SearchResultsPage = () => {
   return (
     <div className="search-results" style={{ padding: "2rem" }}>
       <h2>Search Results for “{query}”</h2>
+
+      {/* 🔽 Sort Dropdown */}
+      <div style={{ marginBottom: "1rem" }}>
+        <label htmlFor="sort">Sort by Price: </label>
+        <select
+          id="sort"
+          value={sortOrder}
+          onChange={(e) => setSortOrder(e.target.value)}
+        >
+          <option value="none">Default</option>
+          <option value="asc">Low to High</option>
+          <option value="desc">High to Low</option>
+        </select>
+      </div>
+
       <div className="product-grid">
         {results.map((product) => (
           <div key={product._id} className="product-card">
             <img src={product.image} alt={product.name} className="product-image" />
             <h4>{product.name}</h4>
             <p>${product.price.toFixed(2)}</p>
+            <p>
+              Availability:{" "}
+              <span style={{ color: product.available ? "green" : "red" }}>
+                {product.available ? "Available" : "Out of Stock"}
+              </span>
+            </p>
+
             <button
               className="add-btn"
-              onClick={() => handleAddToCart(product._id)}
+              onClick={() => handleAddToCart(product)}
+              disabled={!product.available}
+              style={!product.available ? { backgroundColor: "gray", color: "#fff" } : {}}
             >
-              Add to Cart
+              {product.available ? "Add to Cart" : "Unavailable"}
             </button>
           </div>
         ))}
