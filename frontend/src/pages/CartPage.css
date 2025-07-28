@@ -1,0 +1,102 @@
+.cart-container {
+  max-width: 800px;
+  margin: auto;
+  padding: 2rem 1rem;
+  font-family: "Segoe UI", sans-serif;
+}
+
+.cart-container h2 {
+  font-size: 2rem;
+  margin-bottom: 1.5rem;
+}
+
+.cart-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 0;
+  border-bottom: 1px solid #e2e2e2;
+}
+
+.cart-item-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.cart-item img {
+  width: 60px;
+  height: 60px;
+  object-fit: cover;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+}
+
+.cart-item button {
+  background-color: #ff5757;
+  color: white;
+  border: none;
+  padding: 0.4rem 0.8rem;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.cart-item button:hover {
+  background-color: #e64949;
+}
+
+.dropdown-box {
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  padding: 0.5rem;
+  background-color: #f8f8f8;
+  cursor: pointer;
+}
+
+.delivery-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 100%;
+  background: white;
+  border: 1px solid #ccc;
+  border-top: none;
+  z-index: 100;
+}
+
+.delivery-dropdown div {
+  padding: 0.5rem;
+  cursor: pointer;
+  border-bottom: 1px solid #eee;
+}
+
+.delivery-dropdown div:hover {
+  background-color: #f0f8ff;
+}
+
+.checkout-btn {
+  background-color: #4caf50;
+  color: white;
+  border: none;
+  padding: 0.75rem;
+  font-size: 1rem;
+  font-weight: bold;
+  width: 100%;
+  border-radius: 8px;
+  margin-top: 1.5rem;
+  cursor: pointer;
+}
+
+.checkout-btn:hover {
+  background-color: #3fa643;
+}
+
+.summary {
+  margin-top: 1.5rem;
+  text-align: right;
+}
+
+.summary h3,
+.summary h2 {
+  margin: 0.25rem 0;
+}
