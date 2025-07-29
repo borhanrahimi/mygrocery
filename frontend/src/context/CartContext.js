@@ -22,12 +22,39 @@ export function CartProvider({ children }) {
     }
   }, [userId, API_URL]);
 
+  // ✅ Add to Cart Function
+  const addToCart = (productId) => {
+    if (!userId) {
+      alert("Please log in to add items to your cart.");
+      return;
+    }
+
+    fetch(`${API_URL}/api/cart/add`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ userId, productId, quantity: 1 })
+    })
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to add to cart");
+        return res.json();
+      })
+      .then(() => {
+        fetchCartCount(); // ✅ Refresh cart count after adding
+      })
+      .catch((err) => {
+        console.error("❌ Error adding to cart:", err);
+        alert("❌ Failed to add item to cart.");
+      });
+  };
+
   useEffect(() => {
     fetchCartCount();
   }, [fetchCartCount]);
 
   return (
-    <CartContext.Provider value={{ count, setCount, updateCartCount: fetchCartCount }}>
+    <CartContext.Provider value={{ count, setCount, updateCartCount: fetchCartCount, addToCart }}>
       {children}
     </CartContext.Provider>
   );

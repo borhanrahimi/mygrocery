@@ -2,9 +2,9 @@ POST https://mygrocery-backend.onrender.com/api/products
 Content-Type: application/json
 
 {
-  "name": "Pork Chops",
-  "price": 4.79,
-  "category": "Meat",
-  "image": "https://farmingdalemeatmarket.com/cdn/shop/products/Boneless-Pork-Chops-Farmingdale-Meat-Market_1200x1200.png?v=1643641886",
-  "stockQuantity": 30
+  "name": "Pineapple",
+  "price": 2.99,
+  "category": "Fruit",
+  "image": "https://www.dole.com/sites/default/files/styles/1024w768h-80/public/media/2025-01/organic%20pineaple.png?itok=4wB5t6Tk-24IDL_Zc",
+  "stockQuantity": 0
 }

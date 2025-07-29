@@ -100,13 +100,13 @@ function Header() {
         updateCartCount();
       })
       .catch((err) => {
-        console.error("❌ Add to cart failed:", err);
+        console.error(" Add to cart failed:", err);
       });
   };
 
   return (
     <header className="main-header">
-      <Link to="/" className="header-logo">Mygrocery</Link>
+      <Link to="/" className="header-logo">MyGrocery</Link>
 
       <div className="search-wrapper">
         <input
@@ -121,7 +121,10 @@ function Header() {
           <ul className="search-suggestions">
             {suggestions.map((item) => (
               <li key={item._id} className="suggestion-item">
-                <span onClick={() => handleSuggestionClick(item.name)} className="product-name">
+                <span
+                  onClick={() => handleSuggestionClick(item.name)}
+                  className="product-name"
+                >
                   {item.name}
                 </span>
                 <button
@@ -141,14 +144,15 @@ function Header() {
 
       <div className="header-icons">
         <Link to="/cart" className="icon-link cart-icon-wrapper">
-          🛒
+          <img src="/cart.png" alt="Cart" className="cart-icon" />
           {count > 0 && <span className="cart-badge">{count}</span>}
         </Link>
 
         <div className="user-menu">
-          <span className="icon-link user-button" onClick={toggleDropdown}>
-            👤 {firstName}
-          </span>
+          <div className="icon-link user-button" onClick={toggleDropdown}>
+            <img src="/user.png" alt="User" className="user-icon" />
+            {firstName}
+          </div>
 
           {showDropdown && (
             <div className="dropdown-menu">
