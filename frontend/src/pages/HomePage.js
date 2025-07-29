@@ -20,7 +20,7 @@ function HomePage() {
       });
   }, [API_URL]);
 
-  const categories = ["All", "Fruit", "Meat", "Bakery", "Coffee"];
+  const categories = ["All", "Fruit", "Meat", "Bakery", "Dairy", "Coffee"];
 
   const filteredProducts =
     selectedCategory === "All"
