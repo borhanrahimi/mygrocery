@@ -4,11 +4,10 @@ import Header from "./components/Header";
 import HomePage from "./pages/HomePage";
 import CartPage from "./pages/CartPage";
 import LoginRegisterPage from "./pages/LoginRegisterPage";
-import CategoryPage from "./pages/CategoryPage";
 import CheckoutSuccessPage from "./pages/CheckoutSuccessPage";
 import OrderHistoryPage from "./pages/OrderHistoryPage";
 import ProfilePage from "./pages/ProfilePage";
-import SearchResultsPage from "./pages/SearchResultsPage"; // ✅ updated
+import SearchResultsPage from "./pages/SearchResultsPage"; 
 import { RequireLogin } from "./components/RequireLogin";
 import "./App.css";
 
@@ -26,7 +25,6 @@ function App() {
           <Route path="/profile" element={<RequireLogin><ProfilePage /></RequireLogin>} />
           <Route path="/cart" element={<RequireLogin><CartPage /></RequireLogin>} />
           <Route path="/orders" element={<RequireLogin><OrderHistoryPage /></RequireLogin>} />
-          <Route path="/category/:categoryName" element={<RequireLogin><CategoryPage /></RequireLogin>} />
           <Route path="/checkout-success" element={<RequireLogin><CheckoutSuccessPage /></RequireLogin>} />
           <Route path="/search" element={<SearchResultsPage/>} />
 

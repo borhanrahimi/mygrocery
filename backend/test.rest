@@ -2,9 +2,9 @@ POST https://mygrocery-backend.onrender.com/api/products
 Content-Type: application/json
 
 {
-  "name": "Pineapple",
-  "price": 2.99,
-  "category": "Fruit",
-  "image": "https://www.dole.com/sites/default/files/styles/1024w768h-80/public/media/2025-01/organic%20pineaple.png?itok=4wB5t6Tk-24IDL_Zc",
-  "stockQuantity": 0
+  "name": "Salmon Fish",
+  "price": 20.80,
+  "category": "Meat",
+  "image": "https://media.istockphoto.com/id/682193462/vector/set-salmon-vector-illustration.jpg?s=612x612&w=0&k=20&c=yTdDFDF48Imd0nkt1Az9QlS5OL2TReOU7QB5vQ-iAjk=",
+  "stockQuantity": 25
 }

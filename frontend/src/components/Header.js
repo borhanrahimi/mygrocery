@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, { useContext, useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { CartContext } from "../context/CartContext";
 import { AuthContext } from "../context/AuthContext";
@@ -11,7 +11,9 @@ function Header() {
   const [showDropdown, setShowDropdown] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [suggestions, setSuggestions] = useState([]);
+  const [showSearch, setShowSearch] = useState(false);
   const navigate = useNavigate();
+  const searchWrapperRef = useRef(null);
 
   const API_URL = process.env.REACT_APP_API_URL;
 
@@ -26,6 +28,16 @@ function Header() {
       setShowDropdown(false);
     }
   }, [user, API_URL]);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (searchWrapperRef.current && !searchWrapperRef.current.contains(e.target)) {
+        setShowSearch(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const toggleDropdown = () => {
     if (user) {
@@ -68,6 +80,7 @@ function Header() {
       navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
       setSearchQuery("");
       setSuggestions([]);
+      setShowSearch(false);
     }
   };
 
@@ -75,6 +88,7 @@ function Header() {
     navigate(`/search?q=${encodeURIComponent(name)}`);
     setSearchQuery("");
     setSuggestions([]);
+    setShowSearch(false);
   };
 
   const handleAddToCart = (productId) => {
@@ -108,7 +122,17 @@ function Header() {
     <header className="main-header">
       <Link to="/" className="header-logo">MyGrocery</Link>
 
-      <div className="search-wrapper">
+      <div
+        className={`search-wrapper ${showSearch ? "expanded" : ""}`}
+        ref={searchWrapperRef}
+      >
+        <img
+          src="/Search.png"
+          alt="Search"
+          className="search-icon-only"
+          onClick={() => setShowSearch((prev) => !prev)}
+        />
+
         <input
           type="text"
           placeholder="Search"
@@ -116,7 +140,9 @@ function Header() {
           value={searchQuery}
           onChange={handleSearch}
           onKeyDown={handleSearchKeyPress}
+          style={{ display: showSearch ? "block" : "" }}
         />
+
         {suggestions.length > 0 && (
           <ul className="search-suggestions">
             {suggestions.map((item) => (

@@ -17,11 +17,15 @@
   text-decoration: none;
 }
 
+/* 🔍 Search Wrapper */
 .search-wrapper {
   position: relative;
   width: 100%;
   max-width: 500px;
   margin: 0 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .search-bar {
@@ -32,6 +36,15 @@
   font-size: 1rem;
 }
 
+/* 🔍 Search Icon */
+.search-icon-only {
+  width: 28px;
+  height: 28px;
+  cursor: pointer;
+  display: none;
+}
+
+/* 🛒 Header Icons (Cart/User) */
 .header-icons {
   display: flex;
   align-items: center;
@@ -76,7 +89,6 @@
   align-items: center;
 }
 
-/* ✅ User icon image */
 .user-icon {
   width: 28px;
   height: 28px;
@@ -164,86 +176,31 @@
   color: green;
 }
 
-/* ========== ORDER HISTORY ========== */
-
-.order-history-container {
-  max-width: 800px;
-  margin: 2rem auto;
-  padding: 1.5rem;
-  background: #fafafa;
-  border-radius: 12px;
-}
-
-.order-card {
-  background: #fff;
-  border-radius: 12px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
-  margin-bottom: 2rem;
-  padding: 1.5rem 2rem;
-  transition: transform 0.2s ease;
-}
-
-.order-card:hover {
-  transform: translateY(-2px);
-}
-
-.order-header p {
-  margin: 6px 0;
-  font-size: 15px;
-  color: #333;
-}
-
-.order-header p strong {
-  color: #000;
-}
-
-.order-items {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1rem;
-  margin-top: 1rem;
-}
-
-.order-item {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  background: #f4f4f4;
-  padding: 0.6rem 1rem;
-  border-radius: 10px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-}
-
-.item-image {
-  width: 42px;
-  height: 42px;
-  object-fit: cover;
-  border-radius: 6px;
-  border: 1px solid #ddd;
-}
-
-.item-name {
-  font-weight: 500;
-  color: #222;
-}
-
-.item-quantity {
-  color: #666;
-  font-size: 14px;
-}
-
 /* ========== MOBILE RESPONSIVE ========== */
 
-@media (max-width: 600px) {
+@media (max-width: 768px) {
   .main-header {
     flex-direction: column;
     align-items: center;
   }
 
-  .search-wrapper {
+  .search-bar {
+    display: none;
+  }
+
+  .search-wrapper.expanded .search-bar {
+    display: block;
+    margin-top: 0.5rem;
     width: 100%;
+  }
+
+  .search-icon-only {
+    display: inline-block;
+  }
+
+  .search-wrapper {
+    justify-content: center;
     max-width: 90%;
-    margin: 1rem 0;
   }
 
   .header-icons {

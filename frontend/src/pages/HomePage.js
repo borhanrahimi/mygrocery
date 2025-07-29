@@ -65,12 +65,17 @@ function HomePage() {
       </aside>
 
       <main className="main-content">
-        <div className="header-row">
-          <h2 className="main-title">
+        <div className="search-header-bar">
+          <span className="result-count">
+            {sortedProducts.length} product{sortedProducts.length !== 1 ? "s" : ""}
+          </span>
+
+          <h2 className="search-query-text">
             {selectedCategory === "All"
-            ? "All Products"
-            : `${selectedCategory} Products`}
-            </h2>
+              ? "All Products"
+              : `${selectedCategory} Products`}
+          </h2>
+
           <div className="sort-section">
             <label htmlFor="sortSelect" className="sort-label">
               Sort
@@ -89,6 +94,8 @@ function HomePage() {
             </select>
           </div>
         </div>
+
+        <hr className="search-divider" />
 
         <div className="product-grid">
           {sortedProducts.map((product) => (
