@@ -1,106 +1,127 @@
-.profile-container {
-  max-width: 450px;
-  margin: 2rem auto;
+/* ===== Layout container like HomePage ===== */
+.page-container {
+  display: flex;
+  background: white;
   padding: 2rem;
-  background: #f9f9f9;
-  border-radius: 15px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  font-family: "Segoe UI", sans-serif;
+  gap: 2rem;
 }
 
-.profile-box h2 {
-  margin-bottom: 1.5rem;
-  text-align: center;
+/* ===== Sidebar ===== */
+.sidebar {
+  width: 200px;
+  border-right: 1px solid #ddd;
+}
+
+.sidebar-title {
+  font-size: 18px;
+  margin-bottom: 1rem;
+  font-weight: bold;
+}
+
+.category-list {
+  list-style: none;
+  padding-left: 0;
+}
+
+.category-item {
+  padding: 0.6rem 0;
+  cursor: pointer;
   color: #333;
 }
 
-.profile-box input {
-  width: 100%;
-  padding: 0.75rem 1rem;
-  margin-bottom: 1rem;
-  border: 1px solid #ccc;
-  border-radius: 10px;
-  font-size: 1rem;
+.category-item.active {
+  font-weight: bold;
+  color: #008000;
+  border-left: 3px solid #008000;
+  padding-left: 0.5rem;
 }
 
-.profile-box p {
-  font-size: 1rem;
-  color: #444;
-  margin-bottom: 0.75rem;
+/* ===== Main content ===== */
+.main-content {
+  flex: 1;
 }
 
-.profile-btns {
+/* ===== Profile cards ===== */
+.card {
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 16px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.card-header {
   display: flex;
   justify-content: space-between;
-  gap: 1rem;
+  align-items: center;
+  margin-bottom: 1.25rem;
 }
 
-.profile-btns button {
-  flex: 1;
-  padding: 0.6rem;
-  font-size: 1rem;
-  background-color: #007bff;
-  border: none;
-  border-radius: 10px;
-  color: white;
+.card-header h3 {
+  font-size: 20px;
+  margin: 0;
+}
+
+.edit-link {
+  color: #00754a;
+  font-size: 14px;
+  font-weight: bold;
   cursor: pointer;
-  transition: background 0.2s ease;
 }
 
-.profile-btns button:hover {
-  background-color: #0056b3;
-}
-.profile-wrapper {
-  max-width: 450px;
-  margin: 2rem auto;
-  padding: 2rem;
-  background: #f9f9f9;
-  border-radius: 15px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  font-family: "Segoe UI", sans-serif;
-  text-align: center;
+/* ===== Card body layout ===== */
+.card-body {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
 }
 
-.profile-form {
+.card-body > div {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  font-size: 14px;
+  min-width: 180px;
 }
 
-.profile-form input {
-  padding: 0.75rem 1rem;
+.card-body input {
+  margin-top: 0.4rem;
+  padding: 0.5rem 0.75rem;
+  font-size: 14px;
   border: 1px solid #ccc;
-  border-radius: 10px;
-  font-size: 1rem;
+  border-radius: 8px;
 }
 
-.profile-form button {
-  padding: 0.75rem;
-  font-size: 1rem;
-  background-color: #007bff;
-  border: none;
-  border-radius: 10px;
-  color: white;
-  cursor: pointer;
-  transition: background 0.3s ease;
+/* ===== Grid sizing ===== */
+.grid-5 > div {
+  width: calc(20% - 10px);
 }
 
-.profile-form button:hover {
-  background-color: #0056b3;
+.grid-4 > div {
+  width: calc(25% - 10px);
 }
 
-.logout-button {
-  margin-top: 2rem;
-  padding: 0.75rem;
-  background-color: crimson;
-  color: white;
-  border: none;
-  border-radius: 10px;
-  font-size: 1rem;
-  cursor: pointer;
-}
+/* ===== Responsive Design ===== */
+@media (max-width: 768px) {
+  .page-container {
+    flex-direction: column;
+    padding: 1rem;
+  }
 
-.logout-button:hover {
-  background-color: #b30000;
-}
+  .sidebar {
+    width: 100%;
+    border-right: none;
+    border-bottom: 1px solid #ddd;
+    margin-bottom: 1rem;
+  }
 
+  .category-item.active {
+    border-left: none;
+    border-bottom: 2px solid #008000;
+    padding-left: 0;
+  }
+
+  .grid-5 > div,
+  .grid-4 > div {
+    width: 100%;
+  }
+}
