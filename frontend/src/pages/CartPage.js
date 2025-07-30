@@ -1,7 +1,7 @@
-// CartPage.js
 import React, { useEffect, useState, useContext, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { CartContext } from "../context/CartContext";
+import PayNowButton from "../components/PayNowButton";
 import "./CartPage.css";
 
 function CartPage() {
@@ -188,9 +188,12 @@ function CartPage() {
             <h2>Total: ${totalWithTax.toFixed(2)}</h2>
           </div>
 
-          <button className="checkout-btn" onClick={handleCheckout}>
-             Checkout
-          </button>
+          <div className="checkout-buttons">
+            <button className="checkout-btn" onClick={handleCheckout}>
+              Place Order (No Payment)
+            </button>
+            <PayNowButton cart={cart} />
+          </div>
         </>
       )}
     </div>

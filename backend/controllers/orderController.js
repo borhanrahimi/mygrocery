@@ -1,5 +1,6 @@
 const Cart = require("../models/ShoppingCart");
 const Order = require("../models/Order");
+const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 
 exports.createOrder = async (req, res) => {
   const { userId, deliveryOption, discountCode } = req.body;
@@ -121,5 +122,40 @@ exports.getOrdersByUser = async (req, res) => {
   } catch (err) {
     console.error("❌ Error fetching orders:", err);
     res.status(500).json({ error: "Could not retrieve orders" });
+  }
+};
+
+// ✅ Stripe Checkout session endpoint
+exports.createCheckoutSession = async (req, res) => {
+  const { items } = req.body;
+
+  if (!items || items.length === 0) {
+    return res.status(400).json({ error: "No items provided" });
+  }
+
+  try {
+    const line_items = items.map((item) => ({
+      price_data: {
+        currency: "usd",
+        product_data: {
+          name: item.name,
+        },
+        unit_amount: Math.round(item.price * 100),
+      },
+      quantity: item.quantity,
+    }));
+
+    const session = await stripe.checkout.sessions.create({
+      payment_method_types: ["card"],
+      mode: "payment",
+      line_items,
+      success_url: "http://localhost:3000/success",
+      cancel_url: "http://localhost:3000/cancel",
+    });
+
+    res.json({ url: session.url });
+  } catch (err) {
+    console.error("❌ Stripe session error:", err);
+    res.status(500).json({ error: "Failed to create Stripe session" });
   }
 };
