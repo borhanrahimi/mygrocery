@@ -11,7 +11,7 @@ export function AuthProvider({ children }) {
     if (storedUser) setUser(JSON.parse(storedUser));
   }, []);
 
-  // ✅ Update localStorage when user changes
+  // ✅ Sync user to localStorage
   useEffect(() => {
     if (user) {
       localStorage.setItem("user", JSON.stringify(user));
@@ -20,8 +20,15 @@ export function AuthProvider({ children }) {
     }
   }, [user]);
 
+  // ✅ Logout handler
+  const logout = () => {
+    setUser(null);
+    localStorage.removeItem("user");
+    localStorage.removeItem("userId");
+  };
+
   return (
-    <AuthContext.Provider value={{ user, setUser }}>
+    <AuthContext.Provider value={{ user, setUser, logout }}>
       {children}
     </AuthContext.Provider>
   );

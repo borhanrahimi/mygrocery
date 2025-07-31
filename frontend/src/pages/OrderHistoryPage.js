@@ -14,9 +14,9 @@ const OrderHistoryPage = () => {
   const API_URL = process.env.REACT_APP_API_URL;
 
   useEffect(() => {
-    if (user) {
+    if (user?.userId) {
       axios
-        .get(`${API_URL}/api/orders/${user}`)
+        .get(`${API_URL}/api/orders/${user.userId}`)
         .then((res) => {
           setOrders(res.data);
           setLoading(false);
@@ -28,7 +28,7 @@ const OrderHistoryPage = () => {
     } else {
       setLoading(false);
     }
-  }, [user, API_URL]);
+  }, [user?.userId, API_URL]);
 
   const sortOrders = (orderList) => {
     return [...orderList].sort((a, b) => {
@@ -46,36 +46,51 @@ const OrderHistoryPage = () => {
   return (
     <div className="order-history-page">
       <div className="order-header">
-        <h2>Your Orders</h2>
-        <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
-          <option value="date-newest">Newest First</option>
-          <option value="date-oldest">Oldest First</option>
-          <option value="amount-high">Total: High to Low</option>
-          <option value="amount-low">Total: Low to High</option>
-        </select>
+        <p>{orders.length} Orders</p>
+        <h2>Your Order History</h2>
+        <div>
+          <label htmlFor="sort">Sort</label>{" "}
+          <select
+            id="sort"
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value)}
+          >
+            <option value="date-newest">Date: Newest</option>
+            <option value="date-oldest">Date: Oldest</option>
+            <option value="amount-high">Total: High to Low</option>
+            <option value="amount-low">Total: Low to High</option>
+          </select>
+        </div>
       </div>
 
       <div className="order-list">
         {sortOrders(orders).map((order) => (
           <div key={order._id} className="order-card">
             <div className="order-info">
-              <p><strong>Date:</strong> {new Date(order.createdAt).toLocaleDateString()}</p>
-              <p><strong>Status:</strong> {order.status}</p>
-              <p><strong>Order ID:</strong> {order._id}</p>
-              <p><strong>Total:</strong> ${order?.totalAmount?.toFixed(2) || "0.00"}</p>
+              <p><strong>Order Placed by:</strong><br />{new Date(order.createdAt).toLocaleDateString()}</p>
+              <p><strong>Total:</strong><br />${order?.totalAmount?.toFixed(2) || "0.00"}</p>
+              <p><strong>order</strong><br />#{order._id}</p>
+              <p><strong>status:</strong><br />{order.status}</p>
             </div>
 
             <div className="order-items">
               {order.items?.map((item, i) => (
                 <div key={i} className="item-line">
-                  {item.quantity}x {item.productId?.name}
+                  {item.productId?.image && (
+                    <img src={item.productId.image} alt={item.productId.name} />
+                  )}
+                  <div>
+                    <strong>{item.productId?.name}</strong><br />
+                    ${item.productId?.price?.toFixed(2)} × {item.quantity} = $
+                    {(item.productId?.price * item.quantity).toFixed(2)}
+                  </div>
                 </div>
               ))}
             </div>
 
             <div className="order-actions">
               <button onClick={() => setSelectedOrder(order)}>
-                View Order Details
+                view order details
               </button>
             </div>
           </div>

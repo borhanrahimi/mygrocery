@@ -1,11 +1,10 @@
-import React, { useState, useContext } from "react";
+import React, { useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
-import { AuthContext } from "../context/AuthContext";
-import { useNavigate } from "react-router-dom";
+import "../Styling/AuthForm.css"; // ✅ Create and style this CSS for design
 
-const SignupPage = () => {
-  const { setUser } = useContext(AuthContext);
-  const [form, setForm] = useState({
+const SignUpPage = () => {
+  const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
     phone: "",
@@ -13,46 +12,86 @@ const SignupPage = () => {
     password: ""
   });
 
-  const [error, setError] = useState("");
   const navigate = useNavigate();
   const API_URL = process.env.REACT_APP_API_URL;
 
   const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    setFormData((prev) => ({
+      ...prev,
+      [e.target.name]: e.target.value
+    }));
   };
 
-  const handleSignup = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+
     try {
-      const res = await axios.post(`${API_URL}/api/auth/register`, form);
-
-      const userData = {
-        userId: res.data.userId,
-        email: res.data.email
-      };
-
-      setUser(userData);
-      navigate("/");
+      await axios.post(`${API_URL}/api/auth/register`, formData);
+      navigate("/login"); // ✅ Redirect to login after success
     } catch (err) {
-      console.error("❌ Signup error:", err.response?.data?.error || err.message);
-      setError(err.response?.data?.error || "Signup failed");
+      console.error("❌ Sign-up failed:", err);
+      alert("❌ Registration failed. Try again.");
     }
   };
 
   return (
-    <div className="signup-page">
-      <h2>Sign Up</h2>
-      {error && <p className="error">❌ {error}</p>}
-      <form onSubmit={handleSignup}>
-        <input name="firstName" placeholder="First Name" onChange={handleChange} required />
-        <input name="lastName" placeholder="Last Name" onChange={handleChange} required />
-        <input name="phone" placeholder="Phone" onChange={handleChange} required />
-        <input name="email" type="email" placeholder="Email" onChange={handleChange} required />
-        <input name="password" type="password" placeholder="Password" onChange={handleChange} required />
-        <button type="submit">Create Account</button>
+    <div className="auth-container">
+      <form className="auth-box" onSubmit={handleSubmit}>
+        <h2 className="auth-title">Sign Up</h2>
+
+        <input
+          type="text"
+          name="firstName"
+          placeholder="First Name"
+          value={formData.firstName}
+          onChange={handleChange}
+          required
+        />
+
+        <input
+          type="text"
+          name="lastName"
+          placeholder="Last Name"
+          value={formData.lastName}
+          onChange={handleChange}
+          required
+        />
+
+        <input
+          type="tel"
+          name="phone"
+          placeholder="Phone"
+          value={formData.phone}
+          onChange={handleChange}
+          required
+        />
+
+        <input
+          type="email"
+          name="email"
+          placeholder="Email"
+          value={formData.email}
+          onChange={handleChange}
+          required
+        />
+
+        <input
+          type="password"
+          name="password"
+          placeholder="Password"
+          value={formData.password}
+          onChange={handleChange}
+          required
+        />
+
+        <button type="submit" className="auth-btn">Sign Up</button>
+
+        <p className="auth-toggle">
+          Already have an account? <Link to="/login">Log In</Link>
+        </p>
       </form>
     </div>
   );
 };
 
-export default SignupPage;
+export default SignUpPage;
