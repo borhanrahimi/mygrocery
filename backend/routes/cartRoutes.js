@@ -1,8 +1,9 @@
 const express = require("express");
 const router = express.Router();
 const ShoppingCart = require("../models/ShoppingCart");
+const cartController = require("../controllers/cartController");
 
-// ✅ ADD ITEM TO CART
+// ✅ Add item to cart
 router.post("/add", async (req, res) => {
   const { userId, productId } = req.body;
 
@@ -13,7 +14,7 @@ router.post("/add", async (req, res) => {
       cart = new ShoppingCart({
         userId,
         cartId: Date.now().toString(),
-        items: [],
+        items: []
       });
     }
 
@@ -32,59 +33,42 @@ router.post("/add", async (req, res) => {
 
     res.json({ items: cart.items });
   } catch (err) {
-    console.error("❌ Add to cart error:", err);
+    console.error("❌ Add to cart error:", err.message);
     res.status(500).json({ error: "Something went wrong" });
   }
 });
 
-// ✅ REMOVE ITEM FROM CART (decrease quantity or remove)
+// ✅ Remove item from cart
 router.post("/remove", async (req, res) => {
   const { userId, productId } = req.body;
 
   try {
     const cart = await ShoppingCart.findOne({ userId });
-
-    if (!cart) {
-      console.log("❌ No cart found for user:", userId);
-      return res.status(404).json({ error: "Cart not found" });
-    }
-
-    console.log("🗑️ Trying to remove productId:", productId);
-    console.log("🛒 Cart before:", cart.items.map(i => ({
-      pid: i.productId.toString(),
-      qty: i.quantity
-    })));
+    if (!cart) return res.status(404).json({ error: "Cart not found" });
 
     const index = cart.items.findIndex(
       (item) => item.productId.toString() === productId
     );
 
-    console.log("🔍 Matched index:", index);
-
     if (index !== -1) {
       if (cart.items[index].quantity > 1) {
         cart.items[index].quantity -= 1;
-        console.log("➖ Decreased quantity of item:", productId);
       } else {
         cart.items.splice(index, 1);
-        console.log("❌ Removed item:", productId);
       }
 
       await cart.save();
       await cart.populate("items.productId");
-    } else {
-      console.log("❌ Item not found in cart:", productId);
     }
 
     res.json({ items: cart.items });
   } catch (err) {
-    console.error("❌ Remove from cart error:", err);
+    console.error("❌ Remove item error:", err.message);
     res.status(500).json({ error: "Something went wrong" });
   }
 });
 
-
-// ✅ GET CART BY USER
+// ✅ Get user's full cart
 router.get("/:userId", async (req, res) => {
   try {
     const cart = await ShoppingCart.findOne({ userId: req.params.userId }).populate(
@@ -97,18 +81,17 @@ router.get("/:userId", async (req, res) => {
 
     res.json({ items: cart.items });
   } catch (err) {
-    console.error("❌ Get cart error:", err);
+    console.error("❌ Fetch cart error:", err.message);
     res.status(500).json({ error: "Something went wrong" });
   }
 });
 
-// ✅ OPTIONAL: CLEAR WHOLE CART (if needed)
+// ✅ Clear the entire cart
 router.post("/clear", async (req, res) => {
   const { userId } = req.body;
 
   try {
     const cart = await ShoppingCart.findOne({ userId });
-
     if (cart) {
       cart.items = [];
       await cart.save();
@@ -116,9 +99,12 @@ router.post("/clear", async (req, res) => {
 
     res.json({ items: [] });
   } catch (err) {
-    console.error("❌ Clear cart error:", err);
+    console.error("❌ Clear cart error:", err.message);
     res.status(500).json({ error: "Something went wrong" });
   }
 });
+
+// ✅ Get cart summary (subtotal, tax, delivery, discount, total)
+router.get("/summary/:userId", cartController.getCartSummary);
 
 module.exports = router;

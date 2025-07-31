@@ -11,7 +11,9 @@ const userSchema = new mongoose.Schema({
     city: String,
     state: String,
     zip: String
-  }
+  },
+  stripeCustomerId: String,
+  defaultPaymentMethodId: String
 });
 
 module.exports = mongoose.model("User", userSchema);
