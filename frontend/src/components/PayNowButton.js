@@ -1,41 +1,40 @@
 import React from "react";
-import { loadStripe } from "@stripe/stripe-js";
+import { useNavigate } from "react-router-dom";
 
-const stripePromise = loadStripe("pk_test_51Rqd3tD1s9AluFDZFlSUPD87Y3oYiETZaynNsSdDLwWI7HLDglSGUaS9WfeTiShublMcCzSqc7MUCuzm0NmEX1A000NevL1a5e");
+const PayNowButton = ({ userId, deliveryOption, discountCode }) => {
+  const navigate = useNavigate();
+  const API_URL = process.env.REACT_APP_API_URL;
 
-const PayNowButton = ({ cart }) => {
-  const handleCheckout = async () => {
+  const handlePayment = async () => {
     try {
-      const res = await fetch(`${process.env.REACT_APP_API_URL}/api/orders/create-checkout-session`, {
+      const res = await fetch(`${API_URL}/api/payments/charge-saved-method`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({
-          items: cart.map((item) => ({
-            name: item.name,
-            price: item.price,
-            quantity: item.quantity,
-          })),
+          userId,
+          deliveryOption,
+          discountCode,
         }),
       });
 
       const data = await res.json();
-      console.log("🧾 Stripe session response:", data);
 
-      if (!data.url) {
-        throw new Error("No URL returned from backend");
+      if (res.ok && data.success) {
+        navigate("/checkout-success");
+      } else {
+        alert("❌ Payment failed: " + (data.message || "Something went wrong"));
       }
-
-      const stripe = await stripePromise;
-      stripe.redirectToCheckout({ url: data.url });
-    } catch (error) {
-      console.error("❌ Stripe redirect error:", error);
-      alert("⚠️ Failed to redirect to payment.");
+    } catch (err) {
+      console.error("❌ Error charging card:", err);
+      alert("❌ Could not process payment.");
     }
   };
 
   return (
-    <button className="pay-now-button" onClick={handleCheckout}>
-      💳 Pay with Card
+    <button className="pay-btn" onClick={handlePayment}>
+      Pay with Saved Card
     </button>
   );
 };

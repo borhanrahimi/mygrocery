@@ -1,12 +1,13 @@
 import React, { useEffect, useState, useContext } from "react";
-import "./HomePage.css";
+import ProductCard from "../components/ProductCard";
 import { CartContext } from "../context/CartContext";
+import "./HomePage.css";
 
 function HomePage() {
   const [products, setProducts] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [sortBy, setSortBy] = useState("default");
-  const { addToCart } = useContext(CartContext);
+  const { updateCartCount } = useContext(CartContext);
 
   const API_URL = process.env.REACT_APP_API_URL;
 
@@ -22,111 +23,55 @@ function HomePage() {
 
   const categories = ["All", "Fruit", "Meat", "Bakery", "Dairy", "Coffee"];
 
-  const filteredProducts =
-    selectedCategory === "All"
-      ? products
-      : products.filter(
-          (p) =>
-            p.category.toLowerCase() === selectedCategory.toLowerCase()
-        );
+  const filtered = selectedCategory === "All"
+    ? products
+    : products.filter((p) => p.category === selectedCategory);
 
-  const sortedProducts = [...filteredProducts].sort((a, b) => {
-    switch (sortBy) {
-      case "a-z":
-        return a.name.localeCompare(b.name);
-      case "z-a":
-        return b.name.localeCompare(a.name);
-      case "price-low-high":
-        return a.price - b.price;
-      case "price-high-low":
-        return b.price - a.price;
-      default:
-        return 0;
-    }
+  const sorted = [...filtered].sort((a, b) => {
+    if (sortBy === "name-asc") return a.name.localeCompare(b.name);
+    if (sortBy === "name-desc") return b.name.localeCompare(a.name);
+    if (sortBy === "price-asc") return a.price - b.price;
+    if (sortBy === "price-desc") return b.price - a.price;
+    return 0;
   });
 
   return (
-    <div className="page-container">
-      <aside className="sidebar">
-        <h3 className="sidebar-title">Category</h3>
-        <ul className="category-list">
-          {categories.map((cat) => (
-            <li
-              key={cat}
-              className={`category-item ${
-                selectedCategory === cat ? "active" : ""
-              }`}
-              onClick={() => setSelectedCategory(cat)}
-            >
-              {cat}
-            </li>
-          ))}
-        </ul>
-      </aside>
-
-      <main className="main-content">
-        <div className="search-header-bar">
-          <span className="result-count">
-            {sortedProducts.length} product{sortedProducts.length !== 1 ? "s" : ""}
-          </span>
-
-          <h2 className="search-query-text">
-            {selectedCategory === "All"
-              ? "All Products"
-              : `${selectedCategory} Products`}
-          </h2>
-
-          <div className="sort-section">
-            <label htmlFor="sortSelect" className="sort-label">
-              Sort
-            </label>
-            <select
-              id="sortSelect"
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value)}
-              className="sort-dropdown"
-            >
-              <option value="default">Default</option>
-              <option value="a-z">A-Z</option>
-              <option value="z-a">Z-A</option>
-              <option value="price-low-high">Price: Low to High</option>
-              <option value="price-high-low">Price: High to Low</option>
-            </select>
-          </div>
+    <div className="homepage">
+      <div className="homepage-header">
+        <h2>{selectedCategory}</h2>
+        <div className="sort-controls">
+          <label>Sort:</label>
+          <select onChange={(e) => setSortBy(e.target.value)} value={sortBy}>
+            <option value="default">Default</option>
+            <option value="name-asc">Name ↑</option>
+            <option value="name-desc">Name ↓</option>
+            <option value="price-asc">Price ↑</option>
+            <option value="price-desc">Price ↓</option>
+          </select>
         </div>
+      </div>
 
-        <hr className="search-divider" />
+      <div className="category-sidebar">
+        {categories.map((cat) => (
+          <button
+            key={cat}
+            className={selectedCategory === cat ? "active" : ""}
+            onClick={() => setSelectedCategory(cat)}
+          >
+            {cat}
+          </button>
+        ))}
+      </div>
 
-        <div className="product-grid">
-          {sortedProducts.map((product) => (
-            <div key={product._id} className="product-card">
-              <img
-                src={product.image}
-                alt={product.name}
-                className="product-img"
-              />
-              <h4>{product.name}</h4>
-              <p>${product.price.toFixed(2)}</p>
-              <p className="availability">
-                {product.stockQuantity > 0 ? "Available" : "Out of Stock"}
-              </p>
-              <button
-                className={
-                  product.stockQuantity > 0
-                    ? "add-button"
-                    : "add-button disabled"
-                }
-                disabled={product.stockQuantity === 0}
-                onClick={() =>
-                  product.stockQuantity > 0 && addToCart(product._id)
-                }
-              >
-                {product.stockQuantity > 0 ? "Add to Cart" : "Unavailable"}
-              </button>
-            </div>
-          ))}
-        </div>
-      </main>
+      <div className="product-grid">
+        {sorted.map((product) => (
+          <ProductCard
+            key={product._id}
+            product={product}
+            onAdd={() => updateCartCount()}
+          />
+        ))}
+      </div>
     </div>
   );
 }

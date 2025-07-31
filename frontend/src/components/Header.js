@@ -18,8 +18,8 @@ function Header() {
   const API_URL = process.env.REACT_APP_API_URL;
 
   useEffect(() => {
-    if (user) {
-      fetch(`${API_URL}/api/auth/profile/${user}`)
+    if (user && user.userId) {
+      fetch(`${API_URL}/api/auth/profile/${user.userId}`)
         .then((res) => res.json())
         .then((data) => setFirstName(data.firstName || ""))
         .catch(() => setFirstName(""));
@@ -43,7 +43,7 @@ function Header() {
     if (user) {
       setShowDropdown((prev) => !prev);
     } else {
-      navigate("/auth");
+      navigate("/login");
     }
   };
 
@@ -93,7 +93,7 @@ function Header() {
 
   const handleAddToCart = (productId) => {
     if (!user) {
-      navigate("/auth");
+      navigate("/login");
       return;
     }
 
@@ -103,7 +103,7 @@ function Header() {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        userId: user,
+        userId: user.userId,
         productId,
         quantity: 1,
       }),
@@ -114,7 +114,7 @@ function Header() {
         updateCartCount();
       })
       .catch((err) => {
-        console.error(" Add to cart failed:", err);
+        console.error("❌ Add to cart failed:", err);
       });
   };
 

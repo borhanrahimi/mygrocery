@@ -7,54 +7,32 @@ export function CartProvider({ children }) {
   const userId = localStorage.getItem("userId");
   const API_URL = process.env.REACT_APP_API_URL;
 
-  const fetchCartCount = useCallback(() => {
-    if (userId) {
-      fetch(`${API_URL}/api/cart/${userId}`)
-        .then((res) => res.json())
-        .then((data) => {
-          const totalItems = data.items?.reduce((acc, item) => acc + item.quantity, 0);
-          setCount(totalItems || 0);
-        })
-        .catch((err) => {
-          console.error("❌ Failed to update cart count:", err);
-          setCount(0);
-        });
-    }
-  }, [userId, API_URL]);
+  // ✅ Load cart count on mount
+  const loadCartCount = useCallback(() => {
+    if (!userId) return;
 
-  // ✅ Add to Cart Function
-  const addToCart = (productId) => {
-    if (!userId) {
-      alert("Please log in to add items to your cart.");
-      return;
-    }
-
-    fetch(`${API_URL}/api/cart/add`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({ userId, productId, quantity: 1 })
-    })
-      .then((res) => {
-        if (!res.ok) throw new Error("Failed to add to cart");
-        return res.json();
-      })
-      .then(() => {
-        fetchCartCount(); // ✅ Refresh cart count after adding
+    fetch(`${API_URL}/api/cart/${userId}`)
+      .then((res) => res.json())
+      .then((data) => {
+        const totalCount = data.items?.reduce((sum, item) => sum + item.quantity, 0) || 0;
+        setCount(totalCount);
       })
       .catch((err) => {
-        console.error("❌ Error adding to cart:", err);
-        alert("❌ Failed to add item to cart.");
+        console.error("❌ Failed to fetch cart:", err);
       });
-  };
+  }, [userId, API_URL]);
 
   useEffect(() => {
-    fetchCartCount();
-  }, [fetchCartCount]);
+    loadCartCount();
+  }, [loadCartCount]);
+
+  // ✅ Allow manual update from anywhere
+  const updateCartCount = (newCount) => {
+    setCount(newCount);
+  };
 
   return (
-    <CartContext.Provider value={{ count, setCount, updateCartCount: fetchCartCount, addToCart }}>
+    <CartContext.Provider value={{ count, setCount, updateCartCount, loadCartCount }}>
       {children}
     </CartContext.Provider>
   );

@@ -1,30 +1,27 @@
-import { createContext, useState, useEffect } from "react";
+import { createContext, useEffect, useState } from "react";
 
 export const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
 
-  // On app load, check if userId is in localStorage
+  // ⏪ Load user from localStorage
   useEffect(() => {
-    const storedId = localStorage.getItem("userId");
-    if (storedId) {
-      setUser(storedId);
-    }
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) setUser(JSON.parse(storedUser));
   }, []);
 
-  const login = (userId) => {
-    localStorage.setItem("userId", userId);
-    setUser(userId);
-  };
-
-  const logout = () => {
-    localStorage.removeItem("userId");
-    setUser(null);
-  };
+  // ✅ Update localStorage when user changes
+  useEffect(() => {
+    if (user) {
+      localStorage.setItem("user", JSON.stringify(user));
+    } else {
+      localStorage.removeItem("user");
+    }
+  }, [user]);
 
   return (
-    <AuthContext.Provider value={{ user, login, logout }}>
+    <AuthContext.Provider value={{ user, setUser }}>
       {children}
     </AuthContext.Provider>
   );

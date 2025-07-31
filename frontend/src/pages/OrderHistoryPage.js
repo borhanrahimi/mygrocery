@@ -1,5 +1,4 @@
 import React, { useEffect, useState, useContext } from "react";
-import axios from "axios";
 import { AuthContext } from "../context/AuthContext";
 import "./OrderHistoryPage.css";
 
@@ -8,198 +7,80 @@ const OrderHistoryPage = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [sortBy, setSortBy] = useState("date-newest");
-
-  const [selectedOrder, setSelectedOrder] = useState(null);
-  const [showModal, setShowModal] = useState(false);
-
   const API_URL = process.env.REACT_APP_API_URL;
 
   useEffect(() => {
-    if (user) {
-      axios
-        .get(`${API_URL}/api/orders/${user}`)
-        .then((res) => {
-          setOrders(res.data);
-          setLoading(false);
-        })
-        .catch((err) => {
-          console.error("❌ Failed to fetch orders:", err);
-          setLoading(false);
-        });
-    } else {
-      setLoading(false);
-    }
+    if (!user || !user.userId) return;
+
+    fetch(`${API_URL}/api/orders/${user.userId}`)
+      .then((res) => res.json())
+      .then((data) => {
+        setOrders(data);
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error("❌ Failed to fetch orders:", err);
+        setLoading(false);
+      });
   }, [user, API_URL]);
 
-  const getTotalAmount = (order) => {
-    const subtotal = order.items.reduce(
-      (sum, item) => sum + item.productId.price * item.quantity,
-      0
-    );
-    const discount = order.discountCode?.toUpperCase() === "STUDENT" ? subtotal * 0.1 : 0;
-    const tax = (subtotal - discount) * 0.0825;
-    const delivery = order.deliveryFee || 0;
-    return { subtotal, discount, tax, delivery, total: subtotal - discount + tax + delivery };
-  };
-
-  const handleViewDetails = (order) => {
-    setSelectedOrder(order);
-    setShowModal(true);
-  };
-
-  const closeModal = () => {
-    setSelectedOrder(null);
-    setShowModal(false);
-  };
-
   const sortedOrders = [...orders].sort((a, b) => {
-    switch (sortBy) {
-      case "price-low-high":
-        return getTotalAmount(a).total - getTotalAmount(b).total;
-      case "price-high-low":
-        return getTotalAmount(b).total - getTotalAmount(a).total;
-      case "date-oldest":
-        return new Date(a.timestamp) - new Date(b.timestamp);
-      case "date-newest":
-      default:
-        return new Date(b.timestamp) - new Date(a.timestamp);
-    }
+    if (sortBy === "date-newest") return new Date(b.timestamp) - new Date(a.timestamp);
+    if (sortBy === "date-oldest") return new Date(a.timestamp) - new Date(b.timestamp);
+    if (sortBy === "amount-high") return b.totalAmount - a.totalAmount;
+    if (sortBy === "amount-low") return a.totalAmount - b.totalAmount;
+    return 0;
   });
 
-  if (loading) return <p>Loading order history...</p>;
-  if (!orders.length) return <p>No orders found.</p>;
-
   return (
-    <div className="order-history-container">
-      <div className="order-header-bar">
-        <span className="order-count">
-          {sortedOrders.length} Order{sortedOrders.length !== 1 ? "s" : ""}
-        </span>
-        <h2 className="order-history-title">Your Order History</h2>
-        <div className="sort-section">
-          <label htmlFor="sortSelect" className="sort-label">Sort</label>
-          <select
-            id="sortSelect"
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value)}
-            className="sort-dropdown"
-          >
-            <option value="date-newest">Date: Newest</option>
-            <option value="date-oldest">Date: Oldest</option>
-            <option value="price-low-high">Price: Low to High</option>
-            <option value="price-high-low">Price: High to Low</option>
-          </select>
-        </div>
+    <div className="order-history-page">
+      <h2>🧾 Order History</h2>
+
+      <div className="sort-bar">
+        <span>{orders.length} orders</span>
+        <h3>My Orders</h3>
+        <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
+          <option value="date-newest">Date ↓</option>
+          <option value="date-oldest">Date ↑</option>
+          <option value="amount-high">Amount ↓</option>
+          <option value="amount-low">Amount ↑</option>
+        </select>
       </div>
 
-      <hr className="order-divider" />
-
-      {sortedOrders.map((order) => {
-        const { total } = getTotalAmount(order);
-
-        return (
-          <div key={order._id} className="order-card">
-            <div className="order-summary-header">
-              <div>
-                <p><strong>Order Placed by:</strong></p>
-                <p className="order-date">{new Date(order.timestamp).toLocaleDateString()}</p>
+      {loading ? (
+        <p>Loading orders...</p>
+      ) : sortedOrders.length === 0 ? (
+        <p>You have no past orders.</p>
+      ) : (
+        <div className="order-list">
+          {sortedOrders.map((order) => (
+            <div className="order-card" key={order._id}>
+              <div className="order-header">
+                <p><strong>Date:</strong> {new Date(order.timestamp).toLocaleString()}</p>
+                <p><strong>Total:</strong> ${order.totalAmount.toFixed(2)}</p>
+                <p><strong>Status:</strong> {order.status}</p>
+                <p><strong>Order ID:</strong> {order._id.slice(-6).toUpperCase()}</p>
               </div>
-              <div>
-                <p><strong>Total:</strong></p>
-                <p className="order-total">${total.toFixed(2)}</p>
+
+              <div className="order-items">
+                {order.items.map((item, i) => (
+                  <p key={i}>
+                    {item.quantity}x {item.productId?.name || "Deleted Product"}
+                  </p>
+                ))}
               </div>
-              <div>
-                <p><strong>order</strong> #{order._id}</p>
-                <p><strong>status:</strong> {order.status || "N/A"}</p>
-              </div>
-            </div>
 
-            <hr className="order-divider" />
-
-            <div className="order-items">
-              {order.items.map((item, index) => (
-                <div key={index} className="order-item">
-                  <img
-                    src={item.productId.image}
-                    alt={item.productId.name}
-                    className="item-image"
-                  />
-                  <div className="item-info">
-                    <strong>{item.productId.name}</strong>
-                    <p className="price-line">
-                      ${item.productId.price.toFixed(2)} × {item.quantity} = $
-                      {(item.productId.price * item.quantity).toFixed(2)}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-
-            <div className="order-footer">
-              <button className="view-details-link" onClick={() => handleViewDetails(order)}>
-                view order details
-              </button>
-            </div>
-          </div>
-        );
-      })}
-
-      {showModal && selectedOrder && (
-        <div className="modal-overlay" onClick={closeModal}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-top">
-              <p><strong>Order Placed by:</strong> {new Date(selectedOrder.timestamp).toLocaleDateString()}</p>
-              <p><strong>status:</strong> {selectedOrder.status}</p>
-              <p><strong>order #</strong> {selectedOrder._id}</p>
-            </div>
-
-            <hr />
-
-            <div className="modal-grid">
-              <div>
-                <h4>Ship to</h4>
-                <p>Borhan</p>
-                <p>20614 STONE OAK PKWY APT 2611</p>
-                <p>SAN ANTONIO, TX 78258</p>
-              </div>
-              <div>
-                <h4>Payment Method</h4>
-                <p>Card ending in 7889 (to be replaced with live payment info)</p>
-              </div>
-              <div>
-                <h4>Order Summary</h4>
-                {(() => {
-                  const { subtotal, discount, tax, delivery, total } = getTotalAmount(selectedOrder);
-                  return (
-                    <>
-                      <p><strong>Shipping & Handling:</strong> ${delivery.toFixed(2)}</p>
-                      <p><strong>Total before tax:</strong> ${subtotal.toFixed(2)}</p>
-                      <p><strong>Estimated tax:</strong> ${tax.toFixed(2)}</p>
-                      {discount > 0 && <p><strong>Discount:</strong> Student ${discount.toFixed(2)}</p>}
-                      <p><strong>Total:</strong> ${total.toFixed(2)}</p>
-                    </>
-                  );
-                })()}
+              <div className="order-footer">
+                <span>Subtotal: ${order.subtotal.toFixed(2)}</span>
+                <span>Tax: ${order.taxAmount.toFixed(2)}</span>
+                <span>Delivery: ${order.deliveryFee.toFixed(2)}</span>
+                {order.discountAmount > 0 && (
+                  <span className="discount">Discount: -${order.discountAmount.toFixed(2)}</span>
+                )}
+                <span className="final-total">Total: ${order.totalAmount.toFixed(2)}</span>
               </div>
             </div>
-
-            <hr />
-
-            <div className="modal-items">
-              {selectedOrder.items.map((item, idx) => (
-                <div key={idx} className="order-item">
-                  <img src={item.productId.image} alt={item.productId.name} className="item-image" />
-                  <div className="item-info">
-                    <strong>{item.productId.name}</strong>
-                    <p>${item.productId.price.toFixed(2)} × {item.quantity} = ${(item.productId.price * item.quantity).toFixed(2)}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <button className="close-modal-btn" onClick={closeModal}>Close</button>
-          </div>
+          ))}
         </div>
       )}
     </div>
