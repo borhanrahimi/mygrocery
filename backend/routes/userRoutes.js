@@ -7,3 +7,4 @@ router.put("/:userId", userController.updateUserProfile);
 router.post("/create-stripe-customer", userController.createStripeCustomer);
 
 module.exports = router;
+
