@@ -1,7 +1,7 @@
 import React, { useContext } from "react";
 import { AuthContext } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
-import "./ProductCard.css";
+import "../Styling/ProductCard.css";
 
 function ProductCard({ product, onAdd }) {
   const { user } = useContext(AuthContext);

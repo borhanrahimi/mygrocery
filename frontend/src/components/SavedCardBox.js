@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import "./SavedCardBox.css";
+import "../Styling/SavedCardBox.css";
 
 const SavedCardBox = ({ userId }) => {
   const [card, setCard] = useState(null);

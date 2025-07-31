@@ -1,6 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import "./CheckoutSuccessPage.css";
+import "../Styling/CheckoutSuccessPage.css";
 
 const CheckoutSuccessPage = () => {
   return (

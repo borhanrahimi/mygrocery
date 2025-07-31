@@ -14,7 +14,7 @@ router.post("/add", async (req, res) => {
       cart = new ShoppingCart({
         userId,
         cartId: Date.now().toString(),
-        items: []
+        items: [],
       });
     }
 
@@ -38,12 +38,13 @@ router.post("/add", async (req, res) => {
   }
 });
 
-// ✅ Remove item from cart
+// ✅ Remove ONE unit or entire item from cart
 router.post("/remove", async (req, res) => {
   const { userId, productId } = req.body;
 
   try {
     const cart = await ShoppingCart.findOne({ userId });
+
     if (!cart) return res.status(404).json({ error: "Cart not found" });
 
     const index = cart.items.findIndex(
@@ -52,9 +53,9 @@ router.post("/remove", async (req, res) => {
 
     if (index !== -1) {
       if (cart.items[index].quantity > 1) {
-        cart.items[index].quantity -= 1;
+        cart.items[index].quantity -= 1; // 👈 decrease quantity
       } else {
-        cart.items.splice(index, 1);
+        cart.items.splice(index, 1); // 👈 remove item
       }
 
       await cart.save();
@@ -68,16 +69,14 @@ router.post("/remove", async (req, res) => {
   }
 });
 
-// ✅ Get user's full cart
+// ✅ Get all items in user's cart
 router.get("/:userId", async (req, res) => {
   try {
     const cart = await ShoppingCart.findOne({ userId: req.params.userId }).populate(
       "items.productId"
     );
 
-    if (!cart) {
-      return res.status(200).json({ items: [] });
-    }
+    if (!cart) return res.status(200).json({ items: [] });
 
     res.json({ items: cart.items });
   } catch (err) {
@@ -86,7 +85,7 @@ router.get("/:userId", async (req, res) => {
   }
 });
 
-// ✅ Clear the entire cart
+// ✅ Clear entire cart
 router.post("/clear", async (req, res) => {
   const { userId } = req.body;
 

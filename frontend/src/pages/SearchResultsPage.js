@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useContext } from "react";
 import { useLocation } from "react-router-dom";
 import { CartContext } from "../context/CartContext";
-import "./SearchResultsPage.css";
+import "../Styling/SearchResultsPage.css";
 
 function SearchResultsPage() {
   const [results, setResults] = useState([]);

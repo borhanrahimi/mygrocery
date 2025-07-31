@@ -2,7 +2,7 @@ import React, { useContext, useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { CartContext } from "../context/CartContext";
 import { AuthContext } from "../context/AuthContext";
-import "./Header.css";
+import "../Styling/Header.css";
 
 function Header() {
   const { user, logout } = useContext(AuthContext);

@@ -1,5 +1,5 @@
 import React from "react";
-import "./OrderCard.css";
+import "../Styling/OrderCard.css";
 
 const OrderCard = ({ order, onViewDetails }) => {
   return (
