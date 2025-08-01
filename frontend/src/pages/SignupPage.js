@@ -26,7 +26,7 @@ const SignUpPage = () => {
     e.preventDefault();
 
     try {
-      await axios.post(`${API_URL}/api/auth/register`, formData);
+      await axios.post(`${API_URL}/api/users/register`, formData);
       navigate("/login"); // ✅ Redirect to login after success
     } catch (err) {
       console.error("❌ Sign-up failed:", err);

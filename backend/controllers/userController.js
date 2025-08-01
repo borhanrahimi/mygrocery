@@ -2,7 +2,68 @@ const User = require("../models/User");
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 const bcrypt = require("bcryptjs");
 
-// ✅ GET /api/user/:userId — Fetch user profile
+// ✅ POST /api/users/register — Register a new user
+exports.registerUser = async (req, res) => {
+  try {
+    const { firstName, lastName, phone, email, password } = req.body;
+
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(409).json({ error: "User already exists" });
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    const newUser = new User({
+      firstName,
+      lastName,
+      phone,
+      email,
+      password: hashedPassword,
+      address: {
+        street: "",
+        city: "",
+        state: "",
+        zip: ""
+      }
+    });
+
+    await newUser.save();
+
+    res.status(201).json({ message: "✅ User registered successfully" });
+  } catch (err) {
+    console.error("❌ Registration error:", err.message);
+    res.status(500).json({ error: "Failed to register user" });
+  }
+};
+
+// ✅ POST /api/users/login — Log in
+exports.loginUser = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    const user = await User.findOne({ email });
+    if (!user) return res.status(401).json({ error: "Invalid email or password" });
+
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) return res.status(401).json({ error: "Invalid email or password" });
+
+    res.json({
+      message: "✅ Login successful",
+      userId: user._id,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      email: user.email,
+      phone: user.phone
+    });
+  } catch (err) {
+    console.error("❌ Login error:", err.message);
+    res.status(500).json({ error: "Login failed" });
+  }
+};
+
+// ✅ GET /api/users/:userId — Fetch user profile
 exports.getUserProfile = async (req, res) => {
   try {
     const user = await User.findById(req.params.userId).select("-password");
@@ -26,44 +87,36 @@ exports.getUserProfile = async (req, res) => {
   }
 };
 
-// ✅ PUT /api/user/:userId — Update user profile (including password change)
+// ✅ PUT /api/users/:userId — Update user profile (including password)
 exports.updateUserProfile = async (req, res) => {
   try {
     const updates = req.body;
 
     const user = await User.findById(req.params.userId);
-    if (!user) {
-      return res.status(404).json({ error: "User not found" });
-    }
+    if (!user) return res.status(404).json({ error: "User not found" });
 
-    // ✅ Handle password change
     if (updates.currentPassword && updates.newPassword) {
       const isMatch = await bcrypt.compare(updates.currentPassword, user.password);
-      if (!isMatch) {
-        return res.status(401).json({ error: "❌ Current password is incorrect." });
-      }
+      if (!isMatch) return res.status(401).json({ error: "❌ Current password is incorrect." });
 
       const salt = await bcrypt.genSalt(10);
       user.password = await bcrypt.hash(updates.newPassword, salt);
     }
 
-    // ✅ Update personal info
     if (updates.firstName !== undefined) user.firstName = updates.firstName;
     if (updates.lastName !== undefined) user.lastName = updates.lastName;
     if (updates.email !== undefined) user.email = updates.email;
     if (updates.phone !== undefined) user.phone = updates.phone;
 
-    // ✅ Update address
     if (updates.address) {
       user.address = {
         street: updates.address.street || user.address.street,
         city: updates.address.city || user.address.city,
         state: updates.address.state || user.address.state,
-        zip: updates.address.zip || user.address.zip,
+        zip: updates.address.zip || user.address.zip
       };
     }
 
-    // ✅ Save updated user
     await user.save();
 
     const sanitizedUser = { ...user._doc };
@@ -73,14 +126,13 @@ exports.updateUserProfile = async (req, res) => {
       message: "✅ Profile updated successfully",
       user: sanitizedUser
     });
-
   } catch (err) {
     console.error("❌ Error updating user:", err.message);
     res.status(500).json({ error: "Failed to update profile" });
   }
 };
 
-// ✅ POST /api/user/create-stripe-customer — Create Stripe customer
+// ✅ POST /api/users/create-stripe-customer — Create Stripe customer
 exports.createStripeCustomer = async (req, res) => {
   const { userId, email, firstName, lastName } = req.body;
 

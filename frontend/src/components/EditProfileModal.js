@@ -10,7 +10,7 @@ function EditProfileModal({ userId, section, onClose, onUpdate }) {
   const API_URL = process.env.REACT_APP_API_URL;
 
   useEffect(() => {
-    fetch(`${API_URL}/api/auth/profile/${userId}`)
+    fetch(`${API_URL}/api/users/${userId}`)
       .then((res) => res.json())
       .then((data) => {
         setFormData(data);
@@ -70,7 +70,7 @@ function EditProfileModal({ userId, section, onClose, onUpdate }) {
             }),
           };
 
-    fetch(`${API_URL}/api/auth/profile/${userId}`, {
+        fetch(`${API_URL}/api/users/${userId}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(updatedData),

@@ -21,7 +21,7 @@ const LoginPage = () => {
     e.preventDefault();
 
     try {
-      const res = await axios.post(`${API_URL}/api/auth/login`, formData);
+      const res = await axios.post(`${API_URL}/api/users/login`, formData);
       setUser(res.data);
       localStorage.setItem("user", JSON.stringify(res.data));
       localStorage.setItem("userId", res.data.userId);
