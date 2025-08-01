@@ -91,8 +91,11 @@ exports.updateUserProfile = async (req, res) => {
       if (!isMatch) {
         return res.status(401).json({ error: "❌ Current password is incorrect." });
       }
-      user.password = await bcrypt.hash(updates.newPassword, 10);
+    
+      // ✅ Assign new password, let Mongoose hash it
+      user.password = updates.newPassword;
     }
+    
 
     // Update fields
     if (updates.firstName !== undefined) user.firstName = updates.firstName;
