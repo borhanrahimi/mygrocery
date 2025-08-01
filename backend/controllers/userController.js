@@ -2,7 +2,7 @@ const User = require("../models/User");
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 const bcrypt = require("bcryptjs");
 
-// ✅ Register a new user
+// ✅ Register
 exports.registerUser = async (req, res) => {
   try {
     const { firstName, lastName, phone, email, password } = req.body;
@@ -12,22 +12,18 @@ exports.registerUser = async (req, res) => {
       return res.status(409).json({ error: "User already exists" });
     }
 
+    const hashedPassword = await bcrypt.hash(password, 10);
+
     const newUser = new User({
       firstName,
       lastName,
       phone,
       email,
-      password,
-      address: {
-        street: "",
-        city: "",
-        state: "",
-        zip: "",
-      },
+      password: hashedPassword,
+      address: { street: "", city: "", state: "", zip: "" }
     });
 
     await newUser.save();
-
     res.status(201).json({ message: "✅ User registered successfully" });
   } catch (err) {
     console.error("❌ Registration error:", err.message);
@@ -35,7 +31,7 @@ exports.registerUser = async (req, res) => {
   }
 };
 
-// ✅ Log in
+// ✅ Login
 exports.loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -52,7 +48,7 @@ exports.loginUser = async (req, res) => {
       firstName: user.firstName,
       lastName: user.lastName,
       email: user.email,
-      phone: user.phone,
+      phone: user.phone
     });
   } catch (err) {
     console.error("❌ Login error:", err.message);
@@ -60,11 +56,10 @@ exports.loginUser = async (req, res) => {
   }
 };
 
-// ✅ Get user profile
+// ✅ Get Profile
 exports.getUserProfile = async (req, res) => {
   try {
     const user = await User.findById(req.params.userId).select("-password");
-
     if (!user) return res.status(404).json({ error: "User not found" });
 
     res.json({
@@ -74,7 +69,7 @@ exports.getUserProfile = async (req, res) => {
       phone: user.phone,
       address: user.address,
       stripeCustomerId: user.stripeCustomerId,
-      defaultPaymentMethodId: user.defaultPaymentMethodId,
+      defaultPaymentMethodId: user.defaultPaymentMethodId
     });
   } catch (err) {
     console.error("❌ Error fetching user:", err.message);
@@ -82,7 +77,7 @@ exports.getUserProfile = async (req, res) => {
   }
 };
 
-// ✅ Update profile and password
+// ✅ Update Profile (including password)
 exports.updateUserProfile = async (req, res) => {
   try {
     const updates = req.body;
@@ -90,15 +85,16 @@ exports.updateUserProfile = async (req, res) => {
     const user = await User.findById(req.params.userId);
     if (!user) return res.status(404).json({ error: "User not found" });
 
-    // ✅ Password change
+    // Handle password change
     if (updates.currentPassword && updates.newPassword) {
       const isMatch = await bcrypt.compare(updates.currentPassword, user.password);
-      if (!isMatch) return res.status(401).json({ error: "❌ Current password is incorrect." });
-
-      user.password = updates.newPassword; // ✅ Let the pre('save') middleware hash this
+      if (!isMatch) {
+        return res.status(401).json({ error: "❌ Current password is incorrect." });
+      }
+      user.password = await bcrypt.hash(updates.newPassword, 10);
     }
 
-    // ✅ Other fields
+    // Update fields
     if (updates.firstName !== undefined) user.firstName = updates.firstName;
     if (updates.lastName !== undefined) user.lastName = updates.lastName;
     if (updates.email !== undefined) user.email = updates.email;
@@ -109,18 +105,26 @@ exports.updateUserProfile = async (req, res) => {
         street: updates.address.street || user.address.street,
         city: updates.address.city || user.address.city,
         state: updates.address.state || user.address.state,
-        zip: updates.address.zip || user.address.zip,
+        zip: updates.address.zip || user.address.zip
       };
     }
 
-    await user.save(); // ✅ Triggers pre('save') which hashes password if it changed
+    await user.save();
 
-    const sanitizedUser = { ...user._doc };
-    delete sanitizedUser.password;
+    const sanitizedUser = {
+      userId: user._id,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      email: user.email,
+      phone: user.phone,
+      address: user.address
+    };
 
     res.json({
-      message: "✅ Profile updated successfully",
-      user: sanitizedUser,
+      message: updates.newPassword
+        ? "✅ Password changed successfully"
+        : "✅ Profile updated successfully",
+      user: sanitizedUser
     });
   } catch (err) {
     console.error("❌ Error updating user:", err.message);
@@ -128,10 +132,9 @@ exports.updateUserProfile = async (req, res) => {
   }
 };
 
-// ✅ Create Stripe customer
+// ✅ Stripe Customer
 exports.createStripeCustomer = async (req, res) => {
   const { userId, email, firstName, lastName } = req.body;
-
   try {
     const user = await User.findById(userId);
     if (!user) return res.status(404).json({ error: "User not found" });
@@ -139,14 +142,14 @@ exports.createStripeCustomer = async (req, res) => {
     if (user.stripeCustomerId) {
       return res.json({
         message: "Stripe customer already exists",
-        stripeCustomerId: user.stripeCustomerId,
+        stripeCustomerId: user.stripeCustomerId
       });
     }
 
     const customer = await stripe.customers.create({
       email,
       name: `${firstName} ${lastName}`,
-      metadata: { mongoUserId: userId },
+      metadata: { mongoUserId: userId }
     });
 
     user.stripeCustomerId = customer.id;
@@ -154,10 +157,10 @@ exports.createStripeCustomer = async (req, res) => {
 
     res.json({
       message: "✅ Stripe customer created",
-      stripeCustomerId: customer.id,
+      stripeCustomerId: customer.id
     });
   } catch (err) {
-    console.error("❌ Stripe customer creation error:", err.message);
+    console.error("❌ Stripe error:", err.message);
     res.status(500).json({ error: "Failed to create Stripe customer" });
   }
 };
