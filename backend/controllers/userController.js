@@ -2,7 +2,7 @@ const User = require("../models/User");
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 const bcrypt = require("bcryptjs");
 
-// ✅ POST /api/users/register — Register a new user
+// ✅ Register
 exports.registerUser = async (req, res) => {
   try {
     const { firstName, lastName, phone, email, password } = req.body;
@@ -12,8 +12,7 @@ exports.registerUser = async (req, res) => {
       return res.status(409).json({ error: "User already exists" });
     }
 
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
+    const hashedPassword = await bcrypt.hash(password, 10);
 
     const newUser = new User({
       firstName,
@@ -21,16 +20,10 @@ exports.registerUser = async (req, res) => {
       phone,
       email,
       password: hashedPassword,
-      address: {
-        street: "",
-        city: "",
-        state: "",
-        zip: ""
-      }
+      address: { street: "", city: "", state: "", zip: "" }
     });
 
     await newUser.save();
-
     res.status(201).json({ message: "✅ User registered successfully" });
   } catch (err) {
     console.error("❌ Registration error:", err.message);
@@ -38,7 +31,7 @@ exports.registerUser = async (req, res) => {
   }
 };
 
-// ✅ POST /api/users/login — Log in
+// ✅ Login
 exports.loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -63,14 +56,11 @@ exports.loginUser = async (req, res) => {
   }
 };
 
-// ✅ GET /api/users/:userId — Fetch user profile
+// ✅ Get Profile
 exports.getUserProfile = async (req, res) => {
   try {
     const user = await User.findById(req.params.userId).select("-password");
-
-    if (!user) {
-      return res.status(404).json({ error: "User not found" });
-    }
+    if (!user) return res.status(404).json({ error: "User not found" });
 
     res.json({
       firstName: user.firstName,
@@ -87,7 +77,7 @@ exports.getUserProfile = async (req, res) => {
   }
 };
 
-// ✅ PUT /api/users/:userId — Update user profile (including password)
+// ✅ Update Profile (including password)
 exports.updateUserProfile = async (req, res) => {
   try {
     const updates = req.body;
@@ -95,14 +85,16 @@ exports.updateUserProfile = async (req, res) => {
     const user = await User.findById(req.params.userId);
     if (!user) return res.status(404).json({ error: "User not found" });
 
+    // Handle password change
     if (updates.currentPassword && updates.newPassword) {
       const isMatch = await bcrypt.compare(updates.currentPassword, user.password);
-      if (!isMatch) return res.status(401).json({ error: "❌ Current password is incorrect." });
-
-      const salt = await bcrypt.genSalt(10);
-      user.password = await bcrypt.hash(updates.newPassword, salt);
+      if (!isMatch) {
+        return res.status(401).json({ error: "❌ Current password is incorrect." });
+      }
+      user.password = await bcrypt.hash(updates.newPassword, 10);
     }
 
+    // Update fields
     if (updates.firstName !== undefined) user.firstName = updates.firstName;
     if (updates.lastName !== undefined) user.lastName = updates.lastName;
     if (updates.email !== undefined) user.email = updates.email;
@@ -119,11 +111,19 @@ exports.updateUserProfile = async (req, res) => {
 
     await user.save();
 
-    const sanitizedUser = { ...user._doc };
-    delete sanitizedUser.password;
+    const sanitizedUser = {
+      userId: user._id,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      email: user.email,
+      phone: user.phone,
+      address: user.address
+    };
 
     res.json({
-      message: "✅ Profile updated successfully",
+      message: updates.newPassword
+        ? "✅ Password changed successfully"
+        : "✅ Profile updated successfully",
       user: sanitizedUser
     });
   } catch (err) {
@@ -132,10 +132,9 @@ exports.updateUserProfile = async (req, res) => {
   }
 };
 
-// ✅ POST /api/users/create-stripe-customer — Create Stripe customer
+// ✅ Stripe Customer
 exports.createStripeCustomer = async (req, res) => {
   const { userId, email, firstName, lastName } = req.body;
-
   try {
     const user = await User.findById(userId);
     if (!user) return res.status(404).json({ error: "User not found" });
@@ -161,7 +160,7 @@ exports.createStripeCustomer = async (req, res) => {
       stripeCustomerId: customer.id
     });
   } catch (err) {
-    console.error("❌ Stripe customer creation error:", err.message);
+    console.error("❌ Stripe error:", err.message);
     res.status(500).json({ error: "Failed to create Stripe customer" });
   }
 };

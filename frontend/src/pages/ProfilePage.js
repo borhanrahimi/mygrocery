@@ -15,24 +15,16 @@ function ProfilePage() {
   useEffect(() => {
     if (!user?.userId) return;
 
-    console.log("📡 Fetching profile for:", user.userId);
-
     fetch(`${API_URL}/api/users/${user.userId}`)
       .then(async (res) => {
-        console.log("📥 Response status:", res.status);
         if (!res.ok) {
           const text = await res.text();
           throw new Error(`HTTP error! status: ${res.status}, body: ${text}`);
         }
         return res.json();
       })
-      .then((data) => {
-        console.log("✅ Profile loaded:", data);
-        setProfile(data);
-      })
-      .catch((err) => {
-        console.error("❌ Failed to load profile:", err);
-      });
+      .then((data) => setProfile(data))
+      .catch((err) => console.error("❌ Failed to load profile:", err));
   }, [user, API_URL]);
 
   const handleUpdate = (updatedData) => {

@@ -19,18 +19,33 @@ const LoginPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
+  
     try {
       const res = await axios.post(`${API_URL}/api/users/login`, formData);
-      setUser(res.data);
-      localStorage.setItem("user", JSON.stringify(res.data));
+  
+      const userData = {
+        userId: res.data.userId,
+        firstName: res.data.firstName,
+        lastName: res.data.lastName,
+        email: res.data.email,
+        phone: res.data.phone
+      };
+  
+      setUser(userData);
+      localStorage.setItem("user", JSON.stringify(userData));
       localStorage.setItem("userId", res.data.userId);
+  
       navigate("/");
     } catch (err) {
-      console.error("❌ Login failed:", err);
+      if (err.response) {
+        console.error("❌ Server responded with error:", err.response.data);
+      } else {
+        console.error("❌ Login failed:", err.message);
+      }
       alert("❌ Invalid email or password.");
     }
   };
+  
 
   return (
     <div className="auth-container">

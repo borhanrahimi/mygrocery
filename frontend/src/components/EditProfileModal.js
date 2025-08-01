@@ -6,6 +6,11 @@ function EditProfileModal({ userId, section, onClose, onUpdate }) {
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPasswords, setShowPasswords] = useState({
+    current: false,
+    new: false,
+    confirm: false,
+  });
   const [loading, setLoading] = useState(true);
   const API_URL = process.env.REACT_APP_API_URL;
 
@@ -41,6 +46,13 @@ function EditProfileModal({ userId, section, onClose, onUpdate }) {
     });
   };
 
+  const toggleVisibility = (field) => {
+    setShowPasswords((prev) => ({
+      ...prev,
+      [field]: !prev[field],
+    }));
+  };
+
   const handleSave = () => {
     if (
       section === "personal" &&
@@ -70,7 +82,7 @@ function EditProfileModal({ userId, section, onClose, onUpdate }) {
             }),
           };
 
-        fetch(`${API_URL}/api/users/${userId}`, {
+    fetch(`${API_URL}/api/users/${userId}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(updatedData),
@@ -81,18 +93,8 @@ function EditProfileModal({ userId, section, onClose, onUpdate }) {
       })
       .then((res) => {
         alert(res.message || "✅ Profile updated successfully.");
-
-        const passwordChanged =
-          updatedData.currentPassword && updatedData.newPassword;
-
-        if (passwordChanged) {
-          alert("🔐 Password changed. Please log in again.");
-          localStorage.removeItem("userId");
-          window.location.href = "/login"; // Or use navigate("/login") if using React Router
-        } else {
-          onUpdate(updatedData);
-          onClose();
-        }
+        onUpdate(updatedData);
+        onClose(); // ✅ Don't log out
       })
       .catch((err) => {
         console.error("❌ Error updating profile:", err.message);
@@ -153,24 +155,39 @@ function EditProfileModal({ userId, section, onClose, onUpdate }) {
             />
 
             {/* 🔐 Password Fields */}
-            <input
-              type="password"
-              placeholder="Current Password"
-              value={currentPassword}
-              onChange={(e) => setCurrentPassword(e.target.value)}
-            />
-            <input
-              type="password"
-              placeholder="New Password"
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-            />
-            <input
-              type="password"
-              placeholder="Confirm New Password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-            />
+            <div className="password-field">
+              <input
+                type={showPasswords.current ? "text" : "password"}
+                placeholder="Current Password"
+                value={currentPassword}
+                onChange={(e) => setCurrentPassword(e.target.value)}
+              />
+              <button onClick={() => toggleVisibility("current")}>
+                {showPasswords.current ? "Hide" : "Show"}
+              </button>
+            </div>
+            <div className="password-field">
+              <input
+                type={showPasswords.new ? "text" : "password"}
+                placeholder="New Password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+              />
+              <button onClick={() => toggleVisibility("new")}>
+                {showPasswords.new ? "Hide" : "Show"}
+              </button>
+            </div>
+            <div className="password-field">
+              <input
+                type={showPasswords.confirm ? "text" : "password"}
+                placeholder="Confirm New Password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+              />
+              <button onClick={() => toggleVisibility("confirm")}>
+                {showPasswords.confirm ? "Hide" : "Show"}
+              </button>
+            </div>
           </>
         )}
 
