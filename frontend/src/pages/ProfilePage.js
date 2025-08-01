@@ -13,11 +13,30 @@ function ProfilePage() {
   const API_URL = process.env.REACT_APP_API_URL;
 
   useEffect(() => {
-    if (!user?.userId) return;
-    fetch(`${API_URL}/api/auth/profile/${user.userId}`)
-      .then((res) => res.json())
-      .then((data) => setProfile(data))
-      .catch((err) => console.error("❌ Failed to load profile:", err));
+    if (!user?.userId) {
+      console.warn("⚠️ No user ID found in context.");
+      return;
+    }
+
+    console.log("📡 Fetching profile for:", user.userId);
+
+    fetch(`${API_URL}/api/user/${user.userId}`)
+      .then((res) => {
+        console.log("📥 Response status:", res.status);
+        if (!res.ok) {
+          return res.text().then(text => {
+            throw new Error(`HTTP error! status: ${res.status}, body: ${text}`);
+          });
+        }
+        return res.json();
+      })
+      .then((data) => {
+        console.log("✅ Profile fetched:", data);
+        setProfile(data);
+      })
+      .catch((err) => {
+        console.error("❌ Failed to load profile:", err.message);
+      });
   }, [user, API_URL]);
 
   const handleUpdate = (updatedData) => {
