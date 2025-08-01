@@ -32,8 +32,8 @@ const OrderHistoryPage = () => {
 
   const sortOrders = (orderList) => {
     return [...orderList].sort((a, b) => {
-      if (sortBy === "date-newest") return new Date(b.createdAt) - new Date(a.createdAt);
-      if (sortBy === "date-oldest") return new Date(a.createdAt) - new Date(b.createdAt);
+      if (sortBy === "date-newest") return new Date(b.timestamp) - new Date(a.timestamp);
+      if (sortBy === "date-oldest") return new Date(a.timestamp) - new Date(b.timestamp);
       if (sortBy === "amount-high") return (b.totalAmount || 0) - (a.totalAmount || 0);
       if (sortBy === "amount-low") return (a.totalAmount || 0) - (b.totalAmount || 0);
       return 0;
@@ -67,10 +67,20 @@ const OrderHistoryPage = () => {
         {sortOrders(orders).map((order) => (
           <div key={order._id} className="order-card">
             <div className="order-info">
-              <p><strong>Order Placed by:</strong><br />{new Date(order.createdAt).toLocaleDateString()}</p>
+              <p><strong>Order Placed:</strong><br />
+                {order.timestamp
+                  ? new Date(order.timestamp).toLocaleString("en-US", {
+                      year: "numeric",
+                      month: "short",
+                      day: "numeric",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })
+                  : "N/A"}
+              </p>
               <p><strong>Total:</strong><br />${order?.totalAmount?.toFixed(2) || "0.00"}</p>
-              <p><strong>order</strong><br />#{order._id}</p>
-              <p><strong>status:</strong><br />{order.status}</p>
+              <p><strong>Order:</strong><br />#{order._id}</p>
+              <p><strong>Status:</strong><br />{order.status}</p>
             </div>
 
             <div className="order-items">
@@ -90,7 +100,7 @@ const OrderHistoryPage = () => {
 
             <div className="order-actions">
               <button onClick={() => setSelectedOrder(order)}>
-                view order details
+                View Order Details
               </button>
             </div>
           </div>

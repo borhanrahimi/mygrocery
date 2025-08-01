@@ -35,57 +35,99 @@ function HomePage() {
   });
 
   return (
-    <div className="homepage-container">
+    <div className="page-container">
       {/* Sidebar */}
-      <div className="sidebar">
-        <h3>Category</h3>
-        <ul>
+      <aside className="sidebar">
+        <h3 className="sidebar-title">Category</h3>
+        <ul className="category-list">
           {categories.map((cat) => (
             <li
               key={cat}
-              className={cat === selectedCategory ? "active" : ""}
+              className={`category-item ${selectedCategory === cat ? "active" : ""}`}
               onClick={() => setSelectedCategory(cat)}
             >
               {cat}
             </li>
           ))}
         </ul>
-      </div>
+      </aside>
 
       {/* Main content */}
-      <div className="main-content">
-        <div className="search-header">
-          <div className="result-count">{filteredProducts.length} products</div>
-          <h2 className="search-title">All Products</h2>
-          <div className="sort-dropdown">
-            <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
-              <option value="default">Sort</option>
+      <main className="main-content">
+        <div className="search-header-bar">
+          <span className="result-count">
+            {sortedProducts.length} product{sortedProducts.length !== 1 ? "s" : ""}
+          </span>
+
+          <h2 className="search-query-text">
+            {selectedCategory === "All"
+              ? "All Products"
+              : `${selectedCategory} Products`}
+          </h2>
+
+          <div className="sort-section">
+            <label htmlFor="sortSelect" className="sort-label">Sort</label>
+            <select
+              id="sortSelect"
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+              className="sort-dropdown"
+            >
+              <option value="default">Default</option>
+              <option value="name-asc">A-Z</option>
+              <option value="name-desc">Z-A</option>
               <option value="price-low">Price: Low to High</option>
               <option value="price-high">Price: High to Low</option>
-              <option value="name-asc">Name: A to Z</option>
-              <option value="name-desc">Name: Z to A</option>
             </select>
           </div>
         </div>
 
+        <hr className="search-divider" />
+
         <div className="product-grid">
           {sortedProducts.map((product) => (
             <div key={product._id} className="product-card">
-              <img src={product.image} alt={product.name} />
-              <h3>{product.name}</h3>
-              <p>${product.price.toFixed(2)}</p>
-              <p>Available</p>
-              <button
-                className="add-btn"
-                onClick={() => addToCart(product._id, product.stockQuantity)}
-                disabled={product.stockQuantity === 0}
+              <img
+                src={product.image}
+                alt={product.name}
+                className="product-img"
+              />
+              <h4>{product.name}</h4>
+
+              {/* ✅ BONUS: Dynamic price color based on stock */}
+              <p
+                className="price"
+                style={{
+                  color: product.stockQuantity > 0 ? "#333" : "#999",
+                  fontWeight: "bold",
+                  fontSize: "15px",
+                }}
               >
-                {product.stockQuantity > 0 ? "Add to Cart" : "Out of Stock"}
+                ${product.price.toFixed(2)}
+              </p>
+
+              <p className="availability">
+                {product.stockQuantity > 0 ? "Available" : "Out of Stock"}
+              </p>
+
+              <button
+                className={
+                  product.stockQuantity > 0
+                    ? "add-button"
+                    : "add-button disabled"
+                }
+                disabled={product.stockQuantity === 0}
+                onClick={() =>
+                  product.stockQuantity > 0 &&
+                  addToCart(product._id, product.stockQuantity)
+                }
+              >
+                {product.stockQuantity > 0 ? "Add to Cart" : "Unavailable"}
               </button>
             </div>
           ))}
         </div>
-      </div>
+      </main>
     </div>
   );
 }

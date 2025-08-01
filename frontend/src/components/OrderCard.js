@@ -5,7 +5,18 @@ const OrderCard = ({ order, onViewDetails }) => {
   return (
     <div className="order-card">
       <div className="order-header">
-        <p><strong>Date:</strong> {new Date(order.timestamp).toLocaleString()}</p>
+      <p><strong>Date:</strong> 
+  {order.timestamp
+    ? new Date(order.timestamp).toLocaleString("en-US", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      })
+    : "N/A"}
+</p>
+
         <p><strong>Total:</strong> ${order.totalAmount.toFixed(2)}</p>
         <p><strong>Status:</strong> {order.status}</p>
         <p><strong>Order ID:</strong> {order._id.slice(-6).toUpperCase()}</p>

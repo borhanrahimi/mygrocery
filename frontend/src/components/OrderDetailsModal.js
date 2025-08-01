@@ -6,7 +6,7 @@ const OrderDetailsModal = ({ order, onClose }) => {
 
   const {
     _id,
-    createdAt,
+    timestamp,
     status,
     deliveryOption,
     subtotal,
@@ -28,7 +28,7 @@ const OrderDetailsModal = ({ order, onClose }) => {
     <div className="order-details-modal-overlay">
       <div className="order-details-modal">
         <h2>Order #{_id}</h2>
-        <p><strong>Date:</strong> {formatDate(createdAt)}</p>
+        <p><strong>Date:</strong> {formatDate(timestamp)}</p>
         <p><strong>Status:</strong> {status}</p>
         <p><strong>Delivery:</strong> {deliveryOption}</p>
 
@@ -39,7 +39,7 @@ const OrderDetailsModal = ({ order, onClose }) => {
             <br />
             {user?.email}
             <br />
-            {user?.phoneNumber}
+            {user?.phone}
           </p>
         </div>
 
@@ -53,7 +53,7 @@ const OrderDetailsModal = ({ order, onClose }) => {
           <ul>
             {items.map((item, idx) => (
               <li key={idx}>
-                {item.quantity}× {item.productId?.name}
+                {item.quantity}× {item.productId?.name || "Deleted Product"}
               </li>
             ))}
           </ul>
