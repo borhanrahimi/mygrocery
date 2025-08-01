@@ -1,201 +1,113 @@
-.order-history-container {
-  max-width: 700px;
+.order-history-page {
+  max-width: 1000px;
   margin: 2rem auto;
-  padding: 0 1rem;
+  padding: 1.5rem;
+  background-color: #fff;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
 }
 
-.order-header-bar {
+.order-header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin: 1.5rem 0 0.5rem;
+  justify-content: space-between;
   flex-wrap: wrap;
   gap: 1rem;
+  margin-bottom: 2rem;
 }
 
-.order-count {
-  font-weight: bold;
+.order-header h2 {
+  font-size: 2rem;
+  color: #2e2e2e;
+  flex: 1;
+  text-align: center;
+}
+
+.order-header p {
+  font-weight: 500;
+  color: #333;
+}
+
+.order-header select {
+  padding: 0.6rem;
+  border: 1px solid #ccc;
+  border-radius: 8px;
   font-size: 1rem;
 }
 
-.order-history-title {
-  flex: 1;
-  text-align: center;
-  font-size: 1.4rem;
-  margin: 0;
-}
-
-.sort-section {
+.order-list {
   display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.sort-label {
-  font-weight: bold;
-}
-
-.sort-dropdown {
-  padding: 0.4rem;
-  border-radius: 6px;
-  border: 1px solid #ccc;
-}
-
-.order-divider {
-  border: none;
-  border-top: 1px solid #ddd;
-  margin: 1rem 0;
+  flex-direction: column;
+  gap: 2rem;
 }
 
 .order-card {
-  background-color: #fff;
+  background-color: #f9f9f9;
   padding: 1.5rem;
-  margin-bottom: 1.5rem;
-  border: 1px solid #ddd;
-  border-radius: 30px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  border-radius: 14px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
 }
 
-.order-summary-header {
+.order-info {
   display: flex;
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 1rem;
-  font-size: 0.95rem;
+  margin-bottom: 1.5rem;
 }
 
-.order-date,
-.order-total {
-  font-weight: bold;
+.order-info p {
+  margin: 0;
+  font-size: 0.95rem;
+  color: #444;
+  flex: 1;
+  min-width: 160px;
+}
+
+.order-info strong {
+  color: #111;
 }
 
 .order-items {
-  margin-top: 1rem;
+  border-top: 1px solid #ddd;
+  padding-top: 1rem;
+  margin-bottom: 1rem;
 }
 
-.order-item {
+.item-line {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  margin-bottom: 0.6rem;
-}
-
-.order-item img {
-  width: 50px;
-  height: 50px;
-  object-fit: cover;
-  border-radius: 8px;
-  border: 1px solid #ccc;
-  padding: 2px;
-  background-color: #f9f9f9;
-  flex-shrink: 0;
-}
-
-.item-info {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-}
-
-.item-info strong {
-  font-size: 0.95rem;
-}
-
-.price-line {
-  margin: 0;
-  font-size: 0.85rem;
-  color: #555;
-}
-
-.order-footer {
-  display: flex;
-  justify-content: flex-end;
-  margin-top: 1rem;
-}
-
-.view-details-link {
-  color: #007bff;
-  font-size: 0.9rem;
-  text-decoration: none;
-}
-
-.view-details-link:hover {
-  text-decoration: underline;
-}
-
-.modal-overlay {
-  position: fixed;
-  top: 0; left: 0;
-  right: 0; bottom: 0;
-  background: rgba(0, 0, 0, 0.4);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-}
-
-.modal-content {
-  background: white;
-  padding: 2rem;
-  border-radius: 30px;
-  width: 90%;
-  max-width: 800px;
-  max-height: 90vh;
-  overflow-y: auto;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
-}
-
-.modal-top {
-  display: flex;
-  justify-content: space-between;
-  flex-wrap: wrap;
   gap: 1rem;
-  font-size: 0.95rem;
+  margin-bottom: 0.8rem;
 }
 
-.modal-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 2rem;
-  margin: 1.5rem 0;
-}
-
-.modal-grid h4 {
-  margin-bottom: 0.5rem;
-}
-
-.modal-items {
-  margin-top: 1rem;
-}
-
-.order-item {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  margin-bottom: 0.6rem;
-}
-
-.item-image {
-  width: 50px;
-  height: 50px;
+.item-line img {
+  width: 60px;
+  height: 60px;
   object-fit: cover;
   border-radius: 8px;
-  border: 1px solid #ccc;
-  padding: 2px;
-  background-color: #f9f9f9;
 }
 
-.close-modal-btn {
-  margin-top: 1rem;
+.item-line div {
+  font-size: 0.95rem;
+  color: #333;
+}
+
+.order-actions {
+  text-align: right;
+}
+
+.order-actions button {
   background-color: #007bff;
   color: white;
-  border: none;
   padding: 0.6rem 1.2rem;
-  border-radius: 8px;
+  font-size: 0.95rem;
+  border: none;
+  border-radius: 6px;
   cursor: pointer;
-  float: right;
+  transition: background-color 0.3s;
 }
 
-.close-modal-btn:hover {
+.order-actions button:hover {
   background-color: #0056b3;
 }

@@ -28,21 +28,37 @@ function CartPage() {
       .then((data) => setCartItems(data.items || []))
       .catch((err) => console.error("❌ Failed to fetch cart:", err));
 
-    // ✅ Load cart summary
     setLoading(true);
-    fetch(`${API_URL}/api/cart/summary/${user.userId}?delivery=${deliveryOption}&discount=${discountCode}`)
-      .then((res) => res.json())
-      .then((data) => {
-        setSummary(data);
-        setLoading(false);
-      })
-      .catch((err) => {
-        console.error("❌ Failed to fetch summary:", err);
-        setLoading(false);
-      });
-  }, [user, API_URL, deliveryOption, discountCode, navigate]);
+  }, [user, API_URL, navigate]);
 
-  // ✅ Remove 1 unit of product from cart (clean version)
+  // ✅ Load summary when cartItems, deliveryOption or discountCode changes
+  useEffect(() => {
+    if (user && cartItems.length > 0) {
+      const cleanDiscount = discountCode.trim();
+
+      fetch(`${API_URL}/api/cart/summary/${user.userId}?delivery=${deliveryOption}&discount=${cleanDiscount}`)
+        .then((res) => {
+          console.log("📦 Response status:", res.status);
+          if (!res.ok) {
+            return res.text().then((text) => {
+              throw new Error(`HTTP error! status: ${res.status}, body: ${text}`);
+            });
+          }
+          return res.json();
+        })
+        .then((data) => {
+          console.log("✅ Summary response:", data);
+          setSummary(data);
+          setLoading(false);
+        })
+        .catch((err) => {
+          console.error("❌ Failed to fetch summary:", err.message);
+          setLoading(false);
+        });
+    }
+  }, [cartItems, deliveryOption, discountCode, user, API_URL]);
+
+  // ✅ Remove item from cart
   const handleRemoveItem = async (productId) => {
     try {
       const res = await fetch(`${API_URL}/api/cart/remove`, {
@@ -61,18 +77,6 @@ function CartPage() {
       const data = await res.json();
       setCartItems(data.items || []);
       loadCartCount();
-
-      // Refresh summary
-      const summaryRes = await fetch(
-        `${API_URL}/api/cart/summary/${user.userId}?delivery=${deliveryOption}&discount=${discountCode}`
-      );
-
-      if (summaryRes.ok) {
-        const summaryData = await summaryRes.json();
-        setSummary(summaryData);
-      } else {
-        console.warn("⚠️ Could not refresh summary, but item was removed.");
-      }
     } catch (err) {
       console.error("❌ Failed to remove item:", err);
       alert("❌ Could not remove item.");
@@ -83,7 +87,7 @@ function CartPage() {
     const payload = {
       userId: user.userId,
       deliveryOption,
-      discountCode: discountCode || null,
+      discountCode: discountCode.trim() || ""
     };
 
     fetch(`${API_URL}/api/orders/create`, {
@@ -162,13 +166,13 @@ function CartPage() {
               </div>
 
               <div className="cart-summary">
-                <p>Subtotal: ${summary?.subtotal?.toFixed(2)}</p>
-                <p>Tax: ${summary?.tax?.toFixed(2)}</p>
-                <p>Delivery Fee: ${summary?.deliveryFee?.toFixed(2)}</p>
+                <p>Subtotal: ${summary?.subtotal ? summary.subtotal.toFixed(2) : "0.00"}</p>
+                <p>Tax: ${summary?.tax ? summary.tax.toFixed(2) : "0.00"}</p>
+                <p>Delivery Fee: ${summary?.deliveryFee ? summary.deliveryFee.toFixed(2) : "0.00"}</p>
                 {summary?.discountAmount > 0 && (
                   <p className="discount">Discount: -${summary.discountAmount.toFixed(2)}</p>
                 )}
-                <h2>Total: ${summary?.total?.toFixed(2)}</h2>
+                <h2>Total: ${summary?.total ? summary.total.toFixed(2) : "0.00"}</h2>
               </div>
 
               <button className="place-order-btn" onClick={handleNoPaymentCheckout}>
@@ -178,7 +182,7 @@ function CartPage() {
               <PayNowButton
                 userId={user.userId}
                 deliveryOption={deliveryOption}
-                discountCode={discountCode}
+                discountCode={discountCode.trim()}
               />
             </>
           )}

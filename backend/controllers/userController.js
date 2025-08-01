@@ -26,11 +26,10 @@ exports.getUserProfile = async (req, res) => {
   }
 };
 
-// ✅ PUT /api/user/:userId — Update user profile
+// ✅ PUT /api/user/:userId — Update user profile (including password change)
 exports.updateUserProfile = async (req, res) => {
   try {
     const updates = req.body;
-    const updateFields = {};
 
     const user = await User.findById(req.params.userId);
     if (!user) {
@@ -45,34 +44,34 @@ exports.updateUserProfile = async (req, res) => {
       }
 
       const salt = await bcrypt.genSalt(10);
-      const hashedPassword = await bcrypt.hash(updates.newPassword, salt);
-      updateFields.password = hashedPassword;
+      user.password = await bcrypt.hash(updates.newPassword, salt);
     }
 
-    // ✅ Personal Info
-    if (updates.firstName !== undefined) updateFields.firstName = updates.firstName;
-    if (updates.lastName !== undefined) updateFields.lastName = updates.lastName;
-    if (updates.email !== undefined) updateFields.email = updates.email;
-    if (updates.phone !== undefined) updateFields.phone = updates.phone;
+    // ✅ Update personal info
+    if (updates.firstName !== undefined) user.firstName = updates.firstName;
+    if (updates.lastName !== undefined) user.lastName = updates.lastName;
+    if (updates.email !== undefined) user.email = updates.email;
+    if (updates.phone !== undefined) user.phone = updates.phone;
 
-    // ✅ Address
+    // ✅ Update address
     if (updates.address) {
-      updateFields.address = {};
-      if (updates.address.street !== undefined) updateFields.address.street = updates.address.street;
-      if (updates.address.zip !== undefined) updateFields.address.zip = updates.address.zip;
-      if (updates.address.city !== undefined) updateFields.address.city = updates.address.city;
-      if (updates.address.state !== undefined) updateFields.address.state = updates.address.state;
+      user.address = {
+        street: updates.address.street || user.address.street,
+        city: updates.address.city || user.address.city,
+        state: updates.address.state || user.address.state,
+        zip: updates.address.zip || user.address.zip,
+      };
     }
 
-    const updatedUser = await User.findByIdAndUpdate(
-      req.params.userId,
-      { $set: updateFields },
-      { new: true }
-    ).select("-password");
+    // ✅ Save updated user
+    await user.save();
+
+    const sanitizedUser = { ...user._doc };
+    delete sanitizedUser.password;
 
     res.json({
       message: "✅ Profile updated successfully",
-      user: updatedUser
+      user: sanitizedUser
     });
 
   } catch (err) {
@@ -81,7 +80,7 @@ exports.updateUserProfile = async (req, res) => {
   }
 };
 
-// ✅ POST /api/user/create-stripe-customer — Create Stripe customer if needed
+// ✅ POST /api/user/create-stripe-customer — Create Stripe customer
 exports.createStripeCustomer = async (req, res) => {
   const { userId, email, firstName, lastName } = req.body;
 
