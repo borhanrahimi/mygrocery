@@ -1,71 +1,149 @@
 import React, { useEffect, useState, useContext } from "react";
 import { useLocation } from "react-router-dom";
 import { CartContext } from "../context/CartContext";
+import { AuthContext } from "../context/AuthContext";
 import "../Styling/SearchResultsPage.css";
 
-function SearchResultsPage() {
-  const [results, setResults] = useState([]);
-  const [sortBy, setSortBy] = useState("default");
+const SearchResultsPage = () => {
   const location = useLocation();
-  const { addToCart } = useContext(CartContext);
+  const { user } = useContext(AuthContext);
+  const { setCount } = useContext(CartContext);
+  const query = new URLSearchParams(location.search).get("q") || "";
 
-  const query = new URLSearchParams(location.search).get("q");
+  const [results, setResults] = useState([]);
+  const [originalResults, setOriginalResults] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [sortOrder, setSortOrder] = useState("default");
+
   const API_URL = process.env.REACT_APP_API_URL;
 
   useEffect(() => {
     if (query) {
       fetch(`${API_URL}/api/products/search?q=${query}`)
         .then((res) => res.json())
-        .then((data) => setResults(data))
+        .then((data) => {
+          setOriginalResults(data);
+          setResults(data);
+          setLoading(false);
+        })
         .catch((err) => {
           console.error("❌ Failed to fetch search results:", err);
-          alert("❌ Could not load search results");
+          setLoading(false);
         });
+    } else {
+      setOriginalResults([]);
+      setResults([]);
+      setLoading(false);
     }
   }, [query, API_URL]);
 
-  const sortedResults = [...results].sort((a, b) => {
-    if (sortBy === "price-low") return a.price - b.price;
-    if (sortBy === "price-high") return b.price - a.price;
-    if (sortBy === "name-asc") return a.name.localeCompare(b.name);
-    if (sortBy === "name-desc") return b.name.localeCompare(a.name);
-    return 0;
-  });
+  useEffect(() => {
+    let sorted = [...originalResults];
+    if (sortOrder === "price-low-high") sorted.sort((a, b) => a.price - b.price);
+    else if (sortOrder === "price-high-low") sorted.sort((a, b) => b.price - a.price);
+    else if (sortOrder === "a-z") sorted.sort((a, b) => a.name.localeCompare(b.name));
+    else if (sortOrder === "z-a") sorted.sort((a, b) => b.name.localeCompare(a.name));
+    setResults(sorted);
+  }, [sortOrder, originalResults]);
+
+  const handleAddToCart = async (product) => {
+    if (!product.available) {
+      alert("This product is out of stock.");
+      return;
+    }
+    if (!user) {
+      window.location.href = "/auth";
+      return;
+    }
+
+    try {
+      await fetch(`${API_URL}/api/cart/add`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: user, productId: product._id, quantity: 1 }),
+      });
+
+      const res = await fetch(`${API_URL}/api/cart/${user}`);
+      const data = await res.json();
+      const totalItems = data.items?.reduce((acc, item) => acc + item.quantity, 0);
+      setCount(totalItems || 0);
+    } catch (err) {
+      console.error("❌ Add to cart failed:", err);
+    }
+  };
+
+  if (loading) return <p style={{ padding: "2rem" }}>Loading...</p>;
+
+  if (!results.length) {
+    return (
+      <div style={{ padding: "2rem" }}>
+        <h2>No results found for “{query}”</h2>
+      </div>
+    );
+  }
 
   return (
     <div className="search-results-page">
-      <div className="search-header">
-        <div className="result-count">{results.length} results</div>
-        <h2 className="search-title">Results for "{query}"</h2>
-        <div className="sort-dropdown">
-          <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
-            <option value="default">Sort by</option>
-            <option value="price-low">Price: Low to High</option>
-            <option value="price-high">Price: High to Low</option>
-            <option value="name-asc">Name: A to Z</option>
-            <option value="name-desc">Name: Z to A</option>
+      <div className="search-header-bar">
+        <span className="result-count">
+          {results.length} result{results.length !== 1 ? "s" : ""}
+        </span>
+
+        <h2 className="search-query-text">Results for “{query}”</h2>
+
+        <div className="sort-section">
+          <label htmlFor="sortSelect" className="sort-label">Sort</label>
+          <select
+            id="sortSelect"
+            value={sortOrder}
+            onChange={(e) => setSortOrder(e.target.value)}
+            className="sort-dropdown"
+          >
+            <option value="default">Default</option>
+            <option value="a-z">A-Z</option>
+            <option value="z-a">Z-A</option>
+            <option value="price-low-high">Price: Low to High</option>
+            <option value="price-high-low">Price: High to Low</option>
           </select>
         </div>
       </div>
 
+      <hr className="search-divider" />
+
       <div className="product-grid">
-        {sortedResults.map((product) => (
+        {results.map((product) => (
           <div key={product._id} className="product-card">
-            <img src={product.image} alt={product.name} />
-            <h3>{product.name}</h3>
-            <p>${product.price.toFixed(2)}</p>
-            <button
-              className="add-btn"
-              onClick={() => addToCart(product._id, product.stockQuantity)}
-              disabled={product.stockQuantity === 0}
+            <img src={product.image} alt={product.name} className="product-img" />
+            <h4 className="product-name">{product.name}</h4>
+            <p
+              className="price"
+              style={{
+                color: product.stockQuantity > 0 ? "#333" : "#999",
+                fontWeight: "bold",
+                fontSize: "15px",
+              }}
             >
-              {product.stockQuantity > 0 ? "Add to Cart" : "Out of Stock"}
+              ${product.price.toFixed(2)}
+            </p>
+            <p className="availability">
+              {product.stockQuantity > 0 ? "Available" : "Out of Stock"}
+            </p>
+            <button
+              className={
+                product.stockQuantity > 0
+                  ? "add-button"
+                  : "add-button disabled"
+              }
+              disabled={product.stockQuantity === 0}
+              onClick={() => handleAddToCart(product)}
+            >
+              {product.stockQuantity > 0 ? "Add to Cart" : "Unavailable"}
             </button>
           </div>
         ))}
       </div>
     </div>
   );
-}
+};
 
 export default SearchResultsPage;

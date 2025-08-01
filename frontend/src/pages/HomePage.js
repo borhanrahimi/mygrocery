@@ -92,7 +92,7 @@ function HomePage() {
                 alt={product.name}
                 className="product-img"
               />
-              <h4>{product.name}</h4>
+              <h4 className="product-name">{product.name}</h4>
 
               {/* ✅ BONUS: Dynamic price color based on stock */}
               <p
