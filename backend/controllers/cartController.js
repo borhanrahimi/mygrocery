@@ -28,7 +28,6 @@ exports.removeFromCart = async (req, res) => {
       return res.status(404).json({ error: "Cart not found" });
     }
 
-    // Find index of the item
     const index = cart.items.findIndex(item => item.productId.toString() === productId);
 
     if (index !== -1) {
@@ -89,7 +88,6 @@ exports.getCartSummary = async (req, res) => {
 
     const total = parseFloat((subtotal - discountAmount + tax + deliveryFee).toFixed(2));
 
-    // Debug logs
     console.log("✅ Summary for user:", userId);
     console.log("Cart items:", cart.items.length);
     console.log("Valid items:", validItems.length);
@@ -130,5 +128,44 @@ exports.debugCart = async (req, res) => {
     res.json(details);
   } catch (err) {
     res.status(500).json({ error: "Failed to debug cart" });
+  }
+};
+
+// ✅ POST /api/cart/add — Add a product to cart
+exports.addToCart = async (req, res) => {
+  const { userId, productId } = req.body;
+
+  if (!userId || !productId) {
+    return res.status(400).json({ error: "Missing userId or productId" });
+  }
+
+  try {
+    let cart = await Cart.findOne({ userId });
+
+    if (!cart) {
+      cart = new Cart({
+        cartId: `${userId}-${Date.now()}`,
+        userId,
+        items: [],
+      });
+    }
+
+    const existingItem = cart.items.find(
+      (item) => item.productId.toString() === productId
+    );
+
+    if (existingItem) {
+      existingItem.quantity += 1;
+    } else {
+      cart.items.push({ productId, quantity: 1 });
+    }
+
+    await cart.save();
+    await cart.populate("items.productId");
+
+    res.json({ items: cart.items });
+  } catch (err) {
+    console.error("❌ Failed to add to cart:", err.message);
+    res.status(500).json({ error: "Failed to add item to cart" });
   }
 };
