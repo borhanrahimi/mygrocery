@@ -2,12 +2,12 @@ const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const Order = require("../models/Order");
 const Cart = require("../models/ShoppingCart");
 
+// ✅ Create Order (manual checkout)
 exports.createOrder = async (req, res) => {
   const { userId, deliveryOption, discountCode } = req.body;
 
   try {
     const cart = await Cart.findOne({ userId }).populate("items.productId");
-
     if (!cart || cart.items.length === 0) {
       return res.status(400).json({ error: "Cart is empty" });
     }
@@ -73,6 +73,7 @@ exports.createOrder = async (req, res) => {
   }
 };
 
+// ✅ Get all orders for user
 exports.getOrdersByUser = async (req, res) => {
   const userId = req.params.userId;
   try {
@@ -86,13 +87,13 @@ exports.getOrdersByUser = async (req, res) => {
   }
 };
 
+// ✅ Stripe Checkout session (with tax, discount, delivery)
 exports.createCheckoutSession = async (req, res) => {
   const { userId, deliveryOption, discountCode } = req.body;
   console.log("✅ Stripe Checkout HIT:", req.body);
 
   try {
     const cart = await Cart.findOne({ userId }).populate("items.productId");
-
     if (!cart || cart.items.length === 0) {
       return res.status(400).json({ error: "Cart is empty" });
     }
@@ -135,19 +136,50 @@ exports.createCheckoutSession = async (req, res) => {
 
     const line_items = validItems.map((item) => ({
       price_data: {
-        currency: "usd", // ✅ lowercase
-        product_data: {
-          name: item.productId.name,
-        },
-        unit_amount: Math.round(item.productId.price * 100), // in cents
+        currency: "usd",
+        product_data: { name: item.productId.name },
+        unit_amount: Math.round(item.productId.price * 100),
       },
       quantity: item.quantity,
     }));
 
+    if (deliveryFee > 0) {
+      line_items.push({
+        price_data: {
+          currency: "usd",
+          product_data: { name: `Delivery (${deliveryOption})` },
+          unit_amount: Math.round(deliveryFee * 100),
+        },
+        quantity: 1,
+      });
+    }
+
+    if (taxAmount > 0) {
+      line_items.push({
+        price_data: {
+          currency: "usd",
+          product_data: { name: "Sales Tax" },
+          unit_amount: Math.round(taxAmount * 100),
+        },
+        quantity: 1,
+      });
+    }
+
+    if (discountAmount > 0) {
+      line_items.push({
+        price_data: {
+          currency: "usd",
+          product_data: { name: "Student Discount" },
+          unit_amount: Math.round(discountAmount * -100),
+        },
+        quantity: 1,
+      });
+    }
+
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
-      line_items,
       mode: "payment",
+      line_items,
       success_url: `${process.env.CLIENT_URL}/checkout-success`,
       cancel_url: `${process.env.CLIENT_URL}/cart`,
       metadata: {
