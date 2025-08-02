@@ -1,5 +1,6 @@
 const express = require('express');
 const mongoose = require('mongoose');
+const bodyParser = require("body-parser");
 const cors = require('cors');
 require('dotenv').config(); // Load .env variables
 
@@ -36,6 +37,9 @@ app.use(cors({
   credentials: true
 }));
 
+// ✅ Stripe Webhook raw body middleware (must come before express.json)
+app.post('/api/webhook/stripe', bodyParser.raw({ type: 'application/json' }));
+
 // ✅ Middleware
 app.use(express.json());
 app.use(logger); // Logs every request
@@ -55,6 +59,7 @@ app.use('/api/cart', cartRoutes);           // cart operations
 app.use('/api/orders', orderRoutes);        // order creation and history
 app.use('/api/payments', paymentRoutes);    // Stripe integration
 app.use('/api/discount', discountRoutes);   // student discount & others
+app.use('/api/webhook', require('./routes/webhookRoutes')); // ✅ use webhook route
 
 // ✅ Root endpoint
 app.get('/', (req, res) => {
