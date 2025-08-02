@@ -1,3 +1,4 @@
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY); // ✅ Add this at the top
 const Order = require("../models/Order");
 const Cart = require("../models/ShoppingCart");
 
@@ -90,7 +91,85 @@ exports.getOrdersByUser = async (req, res) => {
   }
 };
 
-// (Optional) placeholder for Stripe checkout
-exports.createCheckoutSession = (req, res) => {
-  res.status(501).json({ message: "Stripe not implemented yet" });
+// ✅ NEW: Stripe checkout session (no logic changed)
+exports.createCheckoutSession = async (req, res) => {
+  const { userId, deliveryOption, discountCode } = req.body;
+
+  try {
+    const cart = await Cart.findOne({ userId }).populate("items.productId");
+
+    if (!cart || cart.items.length === 0) {
+      return res.status(400).json({ error: "Cart is empty" });
+    }
+
+    const validItems = cart.items.filter(item => item.productId);
+    if (validItems.length === 0) {
+      return res.status(400).json({ error: "No valid items in cart" });
+    }
+
+    const subtotal = validItems.reduce((sum, item) => {
+      return sum + item.productId.price * item.quantity;
+    }, 0);
+
+    const discountAmount =
+      discountCode?.toUpperCase() === "STUDENT"
+        ? parseFloat((subtotal * 0.1).toFixed(2))
+        : 0;
+
+    const taxRate = 0.0825;
+    const taxAmount = parseFloat(((subtotal - discountAmount) * taxRate).toFixed(2));
+
+    let deliveryFee = 0;
+    switch (deliveryOption) {
+      case "express":
+        deliveryFee = 15;
+        break;
+      case "carryout":
+        deliveryFee = 2.99;
+        break;
+      case "pickup":
+        deliveryFee = 0;
+        break;
+      default:
+        deliveryFee = 5;
+    }
+
+    const totalAmount = parseFloat(
+      (subtotal - discountAmount + taxAmount + deliveryFee).toFixed(2)
+    );
+
+    const line_items = validItems.map((item) => ({
+      price_data: {
+        currency: "usd",
+        product_data: {
+          name: item.productId.name,
+        },
+        unit_amount: Math.round(item.productId.price * 100),
+      },
+      quantity: item.quantity,
+    }));
+
+    const session = await stripe.checkout.sessions.create({
+      payment_method_types: ["card"],
+      line_items,
+      mode: "payment",
+      success_url: `${process.env.CLIENT_URL}/checkout-success`,
+      cancel_url: `${process.env.CLIENT_URL}/cart`,
+      metadata: {
+        userId,
+        deliveryOption,
+        discountCode: discountCode || "",
+        subtotal,
+        discountAmount,
+        taxAmount,
+        deliveryFee,
+        totalAmount,
+      },
+    });
+
+    res.status(200).json({ url: session.url });
+  } catch (err) {
+    console.error("❌ Stripe Checkout Error:", err);
+    res.status(500).json({ error: "Failed to create Stripe session" });
+  }
 };

@@ -3,6 +3,7 @@ import { AuthContext } from "../context/AuthContext";
 import { CartContext } from "../context/CartContext";
 import { useNavigate } from "react-router-dom";
 import PayNowButton from "../components/PayNowButton";
+import StripeCheckoutButton from "../components/StripeCheckoutButton"; // ✅ ADDED
 import "../Styling/CartPage.css";
 
 function CartPage() {
@@ -16,7 +17,6 @@ function CartPage() {
   const API_URL = process.env.REACT_APP_API_URL;
   const navigate = useNavigate();
 
-  // ✅ Load cart items
   useEffect(() => {
     if (!user) {
       navigate("/login");
@@ -27,7 +27,7 @@ function CartPage() {
       .then((res) => res.json())
       .then((data) => {
         setCartItems(data.items || []);
-        setLoading(false); // ✅ fixed placement
+        setLoading(false);
       })
       .catch((err) => {
         console.error("❌ Failed to fetch cart:", err);
@@ -36,7 +36,6 @@ function CartPage() {
       });
   }, [user, API_URL, navigate]);
 
-  // ✅ Load summary when cart changes
   useEffect(() => {
     if (user && cartItems.length > 0) {
       const cleanDiscount = discountCode.trim();
@@ -61,11 +60,10 @@ function CartPage() {
           console.error("❌ Failed to fetch summary:", err.message);
         });
     } else {
-      setSummary(null); // ✅ reset summary when cart is empty
+      setSummary(null);
     }
   }, [cartItems, deliveryOption, discountCode, user, API_URL]);
 
-  // ✅ Remove item from cart
   const handleRemoveItem = async (productId) => {
     try {
       const res = await fetch(`${API_URL}/api/cart/remove`, {
@@ -104,9 +102,9 @@ function CartPage() {
     })
       .then((res) => res.json())
       .then(() => {
-        loadCartCount();             // ✅ refresh the counter
-        setCartItems([]);            // ✅ clear the cart UI
-        setSummary(null);            // ✅ reset the summary
+        loadCartCount();
+        setCartItems([]);
+        setSummary(null);
         navigate("/checkout-success");
       })
       .catch((err) => {
@@ -200,6 +198,12 @@ function CartPage() {
           <button className="place-order-btn" onClick={handleNoPaymentCheckout}>
             Place Order (No Payment)
           </button>
+
+          <StripeCheckoutButton
+            userId={user.userId}
+            deliveryOption={deliveryOption}
+            discountCode={discountCode.trim()}
+          />
 
           <PayNowButton
             userId={user.userId}
