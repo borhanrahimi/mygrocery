@@ -203,3 +203,66 @@ exports.createCheckoutSession = async (req, res) => {
     res.status(500).json({ error: err.message || "Failed to create Stripe session" });
   }
 };
+
+// ✅ Stripe Webhook (called after successful payment)
+exports.handleStripeWebhook = async (req, res) => {
+  const sig = req.headers['stripe-signature'];
+  let event;
+
+  try {
+    event = stripe.webhooks.constructEvent(
+      req.body,
+      sig,
+      process.env.STRIPE_WEBHOOK_SECRET
+    );
+  } catch (err) {
+    console.error("❌ Stripe webhook signature error:", err.message);
+    return res.status(400).send(`Webhook Error: ${err.message}`);
+  }
+
+  if (event.type === 'checkout.session.completed') {
+    const session = event.data.object;
+    const metadata = session.metadata;
+
+    try {
+      const cart = await Cart.findOne({ userId: metadata.userId }).populate("items.productId");
+      if (!cart || cart.items.length === 0) {
+        console.log("❌ Webhook: Cart empty or not found");
+        return res.status(400).send("Cart not found");
+      }
+
+      const validItems = cart.items.filter(item => item.productId);
+      if (validItems.length === 0) {
+        console.log("❌ Webhook: No valid items in cart");
+        return res.status(400).send("No valid items");
+      }
+
+      const order = new Order({
+        userId: metadata.userId,
+        items: validItems.map(item => ({
+          productId: item.productId._id,
+          quantity: item.quantity
+        })),
+        subtotal: metadata.subtotal,
+        discountCode: metadata.discountCode,
+        discountAmount: metadata.discountAmount,
+        taxAmount: metadata.taxAmount,
+        deliveryOption: metadata.deliveryOption,
+        deliveryFee: metadata.deliveryFee,
+        totalAmount: metadata.totalAmount,
+        status: "Paid"
+      });
+
+      await order.save();
+      await Cart.deleteOne({ userId: metadata.userId });
+
+      console.log("✅ Webhook: Order saved and cart cleared");
+      res.status(200).send("Order processed");
+    } catch (err) {
+      console.error("❌ Webhook processing error:", err);
+      res.status(500).send("Internal Error");
+    }
+  } else {
+    res.status(200).send("Unhandled event type");
+  }
+};

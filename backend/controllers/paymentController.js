@@ -125,7 +125,7 @@ exports.attachPaymentMethod = async (req, res) => {
   }
 };
 
-// ✅ 3. (Optional) Get all saved cards for user
+// ✅ 3. Get all saved cards
 exports.getSavedCards = async (req, res) => {
   const userId = req.params.userId;
 
@@ -135,5 +135,74 @@ exports.getSavedCards = async (req, res) => {
   } catch (err) {
     console.error("❌ Get cards error:", err.message);
     res.status(500).json({ error: "Failed to get saved cards" });
+  }
+};
+
+// ✅ 4. Stripe webhook: handle completed checkout and save order
+exports.handleStripeWebhook = async (req, res) => {
+  const sig = req.headers["stripe-signature"];
+  let event;
+
+  try {
+    event = stripe.webhooks.constructEvent(
+      req.rawBody,
+      sig,
+      process.env.STRIPE_WEBHOOK_SECRET
+    );
+  } catch (err) {
+    console.error("❌ Webhook signature error:", err.message);
+    return res.status(400).send(`Webhook Error: ${err.message}`);
+  }
+
+  if (event.type === "checkout.session.completed") {
+    const session = event.data.object;
+
+    try {
+      const userId = session.metadata.userId;
+      const cart = await Cart.findOne({ userId }).populate("items.productId");
+
+      if (!cart || cart.items.length === 0) {
+        console.log("❌ Cart empty or not found for user:", userId);
+        return res.status(200).send("No cart to process.");
+      }
+
+      const validItems = cart.items.filter((i) => i.productId);
+      const {
+        subtotal,
+        discountCode,
+        discountAmount,
+        taxAmount,
+        deliveryOption,
+        deliveryFee,
+        totalAmount,
+      } = session.metadata;
+
+      const order = new Order({
+        userId,
+        items: validItems.map((item) => ({
+          productId: item.productId._id,
+          quantity: item.quantity,
+        })),
+        subtotal,
+        discountCode,
+        discountAmount,
+        taxAmount,
+        totalAmount,
+        deliveryOption,
+        deliveryFee,
+        status: "Paid via Stripe"
+      });
+
+      await order.save();
+      await Cart.deleteOne({ userId });
+
+      console.log(`✅ Stripe Order saved for user ${userId}`);
+      res.status(200).send("Success");
+    } catch (err) {
+      console.error("❌ Webhook order save error:", err.message);
+      res.status(500).send("Failed to save order");
+    }
+  } else {
+    res.status(200).send("Ignored");
   }
 };

@@ -1,50 +1,53 @@
 const express = require('express');
 const mongoose = require('mongoose');
-const bodyParser = require("body-parser");
 const cors = require('cors');
-require('dotenv').config(); // Load .env variables
-
-// ✅ Import middleware
 const logger = require('./middleware/loggerMiddleware');
 const errorHandler = require('./middleware/errorHandler');
+require('dotenv').config();
 
 const app = express();
 
-// ✅ CORS setup — allow localhost, Vercel preview & prod domains
-app.use(cors({
-  origin: function (origin, callback) {
-    if (!origin) return callback(null, true); // Allow Postman & direct calls
+// ✅ CORS setup — allow localhost & Vercel
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      if (!origin) return callback(null, true);
 
-    const allowedOrigins = [
-      'http://localhost:3000',
-      'http://localhost:5000',
-      'https://mygrocery.vercel.app',
-      'https://mygrocery-git-main-borhans-projects-5831680d.vercel.app',
-      'https://mygrocery-r02p88t75-borhans-projects-5831680d.vercel.app'
-    ];
+      const allowedOrigins = [
+        'http://localhost:3000',
+        'http://localhost:5000',
+        'https://mygrocery.vercel.app',
+        'https://mygrocery-git-main-borhans-projects-5831680d.vercel.app',
+        'https://mygrocery-r02p88t75-borhans-projects-5831680d.vercel.app',
+      ];
 
-    const isAllowed =
-      allowedOrigins.includes(origin) ||
-      /^https:\/\/mygrocery-.*\.vercel\.app$/.test(origin); // Vercel preview URLs
+      const isAllowed =
+        allowedOrigins.includes(origin) ||
+        /^https:\/\/mygrocery-.*\.vercel\.app$/.test(origin);
 
-    if (isAllowed) {
-      callback(null, true);
-    } else {
-      console.log('❌ Blocked by CORS:', origin);
-      callback(new Error('CORS not allowed'));
-    }
-  },
-  credentials: true
-}));
+      if (isAllowed) {
+        callback(null, true);
+      } else {
+        console.log('❌ Blocked by CORS:', origin);
+        callback(new Error('CORS not allowed'));
+      }
+    },
+    credentials: true,
+  })
+);
 
-// ✅ Stripe Webhook raw body middleware (must come before express.json)
-app.post('/api/webhook/stripe', bodyParser.raw({ type: 'application/json' }));
+// ✅ Stripe webhook raw body route (must come BEFORE express.json)
+app.use(
+  '/api/payments/webhook',
+  express.raw({ type: 'application/json' }),
+  require('./routes/webhookRoutes') // ⬅️ Make sure this file exists
+);
 
-// ✅ Middleware
+// ✅ Normal JSON middleware
 app.use(express.json());
-app.use(logger); // Logs every request
+app.use(logger);
 
-// ✅ Load routes
+// ✅ Route imports
 const userRoutes = require('./routes/userRoutes');
 const productRoutes = require('./routes/productRoutes');
 const cartRoutes = require('./routes/cartRoutes');
@@ -52,28 +55,28 @@ const orderRoutes = require('./routes/orderRoutes');
 const paymentRoutes = require('./routes/paymentRoutes');
 const discountRoutes = require('./routes/discountRoutes');
 
-// ✅ Use routes
-app.use('/api/users', userRoutes);          // login, register, profile update
-app.use('/api/products', productRoutes);    // product listing & search
-app.use('/api/cart', cartRoutes);           // cart operations
-app.use('/api/orders', orderRoutes);        // order creation and history
-app.use('/api/payments', paymentRoutes);    // Stripe integration
-app.use('/api/discount', discountRoutes);   // student discount & others
-app.use('/api/webhook', require('./routes/webhookRoutes')); // ✅ use webhook route
+// ✅ Route mounting
+app.use('/api/users', userRoutes);         // Auth, profile
+app.use('/api/products', productRoutes);   // Products & search
+app.use('/api/cart', cartRoutes);          // Shopping cart
+app.use('/api/orders', orderRoutes);       // Order create + history + Stripe checkout
+app.use('/api/payments', paymentRoutes);   // Card save + charge
+app.use('/api/discount', discountRoutes);  // Discount codes
 
-// ✅ Root endpoint
+// ✅ Root route
 app.get('/', (req, res) => {
   res.send('🛒 MyGrocery API is live!');
 });
 
-// ✅ Error handler (must come after routes)
+// ✅ Error handler
 app.use(errorHandler);
 
 // ✅ MongoDB connection
-console.log("Connecting to:", process.env.MONGO_URI);
-mongoose.connect(process.env.MONGO_URI)
+console.log('🔌 Connecting to MongoDB...');
+mongoose
+  .connect(process.env.MONGO_URI)
   .then(() => console.log('✅ MongoDB connected'))
-  .catch(err => console.error('❌ MongoDB connection error:', err));
+  .catch((err) => console.error('❌ MongoDB connection error:', err));
 
 // ✅ Start server
 const PORT = process.env.PORT || 5000;
