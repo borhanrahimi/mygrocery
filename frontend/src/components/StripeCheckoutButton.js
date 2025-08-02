@@ -21,10 +21,12 @@ const StripeCheckoutButton = ({ userId, deliveryOption, discountCode }) => {
       const data = await res.json();
 
       if (res.ok && data.url) {
-        window.location.href = data.url; // Redirect to Stripe Checkout
-      } else {
-        alert("❌ Could not start Stripe checkout");
-      }
+  window.location.href = data.url;
+} else {
+  console.error("❌ Backend Error:", data);
+  alert("❌ Could not start Stripe checkout: " + (data.error || "Unknown error"));
+}
+
     } catch (err) {
       console.error("❌ Stripe Checkout Error:", err);
       alert("❌ Failed to start payment");
