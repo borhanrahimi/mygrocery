@@ -1,43 +1,22 @@
-import React from "react";
-import { loadStripe } from "@stripe/stripe-js";
+import PayNowButton from "../components/PayNowButton";
+import { useAuth } from "../context/AuthContext";
+// deliveryOption / discountCode should come from your UI state or CartContext
 
-const stripePromise = loadStripe("pk_test_51Rqd3tD1s9AluFDZFlSUPD87Y3oYiETZaynNsSdDLwWI7HLDglSGUaS9WfeTiShublMcCzSqc7MUCuzm0NmEX1A000NevL1a5e");
-
-const PayNowButton = ({ cart }) => {
-  const handleCheckout = async () => {
-    try {
-      const res = await fetch(`${process.env.REACT_APP_API_URL}/api/orders/create-checkout-session`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          userId,
-          deliveryOption,
-          discountCode,
-        }),
-      });
-
-      const data = await res.json();
-      console.log("🧾 Stripe session response:", data);
-
-      if (!data.url) {
-        throw new Error("No URL returned from backend");
-      }
-
-      const stripe = await stripePromise;
-      stripe.redirectToCheckout({ url: data.url });
-    } catch (error) {
-      console.error("❌ Stripe redirect error:", error);
-      alert("⚠️ Failed to redirect to payment.");
-    }
-  };
+function CartPage() {
+  const { user } = useAuth(); // user?._id
+  // const [deliveryOption, setDeliveryOption] = useState("delivery" | "pickup");
+  // const [discountCode, setDiscountCode] = useState("");
 
   return (
-    <button className="pay-now-button" onClick={handleCheckout}>
-      💳 Pay with Card
-    </button>
+    <div>
+      {/* ...cart UI... */}
+      <PayNowButton
+        userId={user?._id}
+        deliveryOption={deliveryOption}
+        discountCode={discountCode}
+      />
+    </div>
   );
-};
+}
 
-export default PayNowButton;
+export default CartPage;
