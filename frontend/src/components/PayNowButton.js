@@ -1,40 +1,41 @@
-import React, { useState } from "react";
+import React from "react";
+import { loadStripe } from "@stripe/stripe-js";
+
+const stripePromise = loadStripe("pk_test_51Rqd3tD1s9AluFDZFlSUPD87Y3oYiETZaynNsSdDLwWI7HLDglSGUaS9WfeTiShublMcCzSqc7MUCuzm0NmEX1A000NevL1a5e");
 
 const PayNowButton = ({ cart }) => {
-  const [loading, setLoading] = useState(false);
-
   const handleCheckout = async () => {
     try {
-      setLoading(true);
-
       const res = await fetch(`${process.env.REACT_APP_API_URL}/api/orders/create-checkout-session`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({
-          items: cart.map((item) => ({
-            name: item.name,
-            price: item.price,
-            quantity: item.quantity,
-          })),
+          userId,
+          deliveryOption,
+          discountCode,
         }),
       });
 
       const data = await res.json();
       console.log("🧾 Stripe session response:", data);
 
-      window.location.href = data.url;
+      if (!data.url) {
+        throw new Error("No URL returned from backend");
+      }
 
+      const stripe = await stripePromise;
+      stripe.redirectToCheckout({ url: data.url });
     } catch (error) {
       console.error("❌ Stripe redirect error:", error);
       alert("⚠️ Failed to redirect to payment.");
-    } finally {
-      setLoading(false);
     }
   };
 
   return (
-    <button className="pay-now-button" onClick={handleCheckout} disabled={loading}>
-      {loading ? "Redirecting..." : "💳 Pay with Card"}
+    <button className="pay-now-button" onClick={handleCheckout}>
+      💳 Pay with Card
     </button>
   );
 };

@@ -1,8 +1,8 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, { useEffect, useState, useContext } from "react";
 import { useLocation } from "react-router-dom";
 import { CartContext } from "../context/CartContext";
 import { AuthContext } from "../context/AuthContext";
-import "./HomePage.css";
+import "../Styling/SearchResultsPage.css";
 
 const SearchResultsPage = () => {
   const location = useLocation();
@@ -83,21 +83,23 @@ const SearchResultsPage = () => {
   }
 
   return (
-    <div className="main-content" style={{ padding: "2rem" }}>
+    <div className="search-results-page">
       <div className="search-header-bar">
-        <div className="result-count">
-          <strong>{results.length}</strong> result{results.length !== 1 ? "s" : ""}
-        </div>
-        <h2 className="search-query-text">“{query}”</h2>
+        <span className="result-count">
+          {results.length} result{results.length !== 1 ? "s" : ""}
+        </span>
+
+        <h2 className="search-query-text">Results for “{query}”</h2>
+
         <div className="sort-section">
-          <label htmlFor="sortSelect" className="sort-label">Sort by</label>
+          <label htmlFor="sortSelect" className="sort-label">Sort</label>
           <select
             id="sortSelect"
             value={sortOrder}
             onChange={(e) => setSortOrder(e.target.value)}
             className="sort-dropdown"
           >
-            <option value="default">Best Match</option>
+            <option value="default">Default</option>
             <option value="a-z">A-Z</option>
             <option value="z-a">Z-A</option>
             <option value="price-low-high">Price: Low to High</option>
@@ -112,13 +114,26 @@ const SearchResultsPage = () => {
         {results.map((product) => (
           <div key={product._id} className="product-card">
             <img src={product.image} alt={product.name} className="product-img" />
-            <h4>{product.name}</h4>
-            <p>${product.price.toFixed(2)}</p>
+            <h4 className="product-name">{product.name}</h4>
+            <p
+              className="price"
+              style={{
+                color: product.stockQuantity > 0 ? "#333" : "#999",
+                fontWeight: "bold",
+                fontSize: "15px",
+              }}
+            >
+              ${product.price.toFixed(2)}
+            </p>
             <p className="availability">
               {product.stockQuantity > 0 ? "Available" : "Out of Stock"}
             </p>
             <button
-              className={product.stockQuantity > 0 ? "add-button" : "add-button disabled"}
+              className={
+                product.stockQuantity > 0
+                  ? "add-button"
+                  : "add-button disabled"
+              }
               disabled={product.stockQuantity === 0}
               onClick={() => handleAddToCart(product)}
             >

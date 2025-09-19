@@ -2,13 +2,20 @@ const express = require("express");
 const router = express.Router();
 const orderController = require("../controllers/orderController");
 
-// Create order (used for internal DB orders)
+// Manual checkout (not Stripe)
 router.post("/create", orderController.createOrder);
 
-// Get order history by user
+// View all orders for a user
 router.get("/:userId", orderController.getOrdersByUser);
 
-// ✅ Create Stripe Checkout session
+// Stripe Checkout session
 router.post("/create-checkout-session", orderController.createCheckoutSession);
+
+// ✅ Stripe Webhook for finalizing orders
+router.post(
+  "/webhook",
+  express.raw({ type: "application/json" }), // Required for Stripe
+  orderController.handleStripeWebhook
+);
 
 module.exports = router;

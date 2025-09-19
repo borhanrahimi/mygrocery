@@ -1,0 +1,39 @@
+.order-card {
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 0 6px rgba(0,0,0,0.05);
+  }
+  
+  .order-header,
+  .order-footer {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    font-size: 0.95rem;
+  }
+  
+  .order-items {
+    margin: 1rem 0;
+  }
+  
+  .discount {
+    color: green;
+  }
+  
+  .final-total {
+    font-weight: bold;
+  }
+  
+  .view-btn {
+    margin-top: 0.8rem;
+    padding: 6px 12px;
+    background-color: #2e7d32;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+  

@@ -1,199 +1,215 @@
-import React, { useEffect, useState, useContext, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useEffect, useState, useContext } from "react";
+import { AuthContext } from "../context/AuthContext";
 import { CartContext } from "../context/CartContext";
+import { useNavigate } from "react-router-dom";
 import PayNowButton from "../components/PayNowButton";
-import "./CartPage.css";
+import StripeCheckoutButton from "../components/StripeCheckoutButton"; // ✅ ADDED
+import "../Styling/CartPage.css";
 
 function CartPage() {
-  const [cart, setCart] = useState([]);
+  const { user } = useContext(AuthContext);
+  const { loadCartCount } = useContext(CartContext);
+  const [cartItems, setCartItems] = useState([]);
+  const [summary, setSummary] = useState(null);
   const [deliveryOption, setDeliveryOption] = useState("standard");
-  const [showDeliveryMenu, setShowDeliveryMenu] = useState(false);
   const [discountCode, setDiscountCode] = useState("");
-  const userId = localStorage.getItem("userId");
-  const { setCount } = useContext(CartContext);
+  const [loading, setLoading] = useState(true);
+  const API_URL = process.env.REACT_APP_API_URL;
   const navigate = useNavigate();
 
-  const API_URL = process.env.REACT_APP_API_URL;
-
-  const deliveryOptions = {
-    standard: { label: "Standard (3–5 days)", price: 5 },
-    express: { label: "Express (1–2 days)", price: 15 },
-    pickup: { label: "Pickup (Free)", price: 0 },
-  };
-
-  const loadCart = useCallback(() => {
-    fetch(`${API_URL}/api/cart/${userId}`)
-      .then((res) => res.json())
-      .then((data) => {
-        const items = data.items
-          .filter((i) => i.productId)
-          .map((i) => ({
-            ...i.productId,
-            quantity: i.quantity,
-            rawProductId: i.productId._id,
-          }));
-        setCart(items);
-        const totalCount = items.reduce((sum, item) => sum + item.quantity, 0);
-        setCount(totalCount);
-      })
-      .catch((err) => {
-        console.error("❌ Failed to load cart:", err);
-        alert("❌ Could not load cart.");
-      });
-  }, [userId, setCount, API_URL]);
-
   useEffect(() => {
-    if (userId) {
-      loadCart();
-    }
-  }, [userId, loadCart]);
-
-  const removeFromCart = (productId) => {
-    fetch(`${API_URL}/api/cart/remove`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userId, productId }),
-    })
-      .then(loadCart)
-      .catch((err) => {
-        console.error("❌ Remove from cart error:", err);
-        alert("❌ Could not remove item.");
-      });
-  };
-
-  const handleCheckout = () => {
-    if (!userId) {
-      alert("You must be logged in to checkout.");
+    if (!user) {
+      navigate("/login");
       return;
     }
+
+    fetch(`${API_URL}/api/cart/${user.userId}`)
+      .then((res) => res.json())
+      .then((data) => {
+        setCartItems(data.items || []);
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error("❌ Failed to fetch cart:", err);
+        setCartItems([]);
+        setLoading(false);
+      });
+  }, [user, API_URL, navigate]);
+
+  useEffect(() => {
+    if (user && cartItems.length > 0) {
+      const cleanDiscount = discountCode.trim();
+
+      fetch(
+        `${API_URL}/api/cart/summary/${user.userId}?delivery=${deliveryOption}&discount=${cleanDiscount}`
+      )
+        .then((res) => {
+          if (!res.ok) {
+            return res.text().then((text) => {
+              throw new Error(
+                `HTTP error! status: ${res.status}, body: ${text}`
+              );
+            });
+          }
+          return res.json();
+        })
+        .then((data) => {
+          setSummary(data);
+        })
+        .catch((err) => {
+          console.error("❌ Failed to fetch summary:", err.message);
+        });
+    } else {
+      setSummary(null);
+    }
+  }, [cartItems, deliveryOption, discountCode, user, API_URL]);
+
+  const handleRemoveItem = async (productId) => {
+    try {
+      const res = await fetch(`${API_URL}/api/cart/remove`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId: user.userId,
+          productId,
+        }),
+      });
+
+      if (!res.ok) {
+        throw new Error("Failed to remove item");
+      }
+
+      const data = await res.json();
+      setCartItems(data.items || []);
+      loadCartCount();
+    } catch (err) {
+      console.error("❌ Failed to remove item:", err);
+      alert("❌ Could not remove item.");
+    }
+  };
+
+  const handleNoPaymentCheckout = () => {
+    const payload = {
+      userId: user.userId,
+      deliveryOption,
+      discountCode: discountCode.trim() || "",
+    };
 
     fetch(`${API_URL}/api/orders/create`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userId, deliveryOption, discountCode }),
+      body: JSON.stringify(payload),
     })
       .then((res) => res.json())
-      .then((data) => {
-        if (data.orderId) {
-          setCart([]);
-          setCount(0);
-          navigate("/checkout-success", { state: data });
-        } else {
-          alert("❌ Error placing order.");
-        }
+      .then(() => {
+        loadCartCount();
+        setCartItems([]);
+        setSummary(null);
+        navigate("/checkout-success");
       })
       .catch((err) => {
-        console.error("❌ Checkout error:", err);
-        alert("❌ Something went wrong.");
+        console.error("❌ Order error:", err);
+        alert("❌ Failed to place order.");
       });
   };
 
-  if (!userId) {
-    return <p>Please <a href="/auth">log in</a> to view your cart.</p>;
-  }
-
-  const subtotal = cart.reduce(
-    (sum, item) => sum + (item.price || 0) * item.quantity,
-    0
-  );
-  const isStudent = discountCode.trim().toLowerCase() === "student";
-  const discount = isStudent ? subtotal * 0.1 : 0;
-  const discountedSubtotal = subtotal - discount;
-  const taxAmount = discountedSubtotal * 0.0825;
-  const deliveryFee = deliveryOptions[deliveryOption].price;
-  const totalWithTax = discountedSubtotal + taxAmount + deliveryFee;
-
   return (
-    <div className="cart-container">
-      <h2> Your Cart</h2>
-      {cart.length === 0 ? (
+    <div className="cart-page">
+      <h2>Your Cart</h2>
+
+      {loading ? (
+        <p>Loading cart...</p>
+      ) : cartItems.length === 0 ? (
         <p>Your cart is empty.</p>
       ) : (
         <>
-          <ul style={{ listStyle: "none", padding: 0 }}>
-            {cart.map((item) => (
-              <li key={item.rawProductId} className="cart-item">
-                <div className="cart-item-info">
-                  <img src={item.image} alt={item.name} />
-                  <div>
-                    <strong>{item.name}</strong>
-                    <br />
-                    ${item.price?.toFixed(2) || "0.00"} × {item.quantity} = $
-                    {(item.price * item.quantity).toFixed(2)}
-                  </div>
-                </div>
-                <button onClick={() => removeFromCart(item.rawProductId)}>Remove</button>
-              </li>
-            ))}
-          </ul>
-
-          {/* Delivery Option */}
-          <div style={{ marginTop: "2rem", position: "relative", maxWidth: "300px" }}>
-            <label style={{ fontWeight: "bold" }}>Delivery Option:</label>
-            <div
-              onClick={() => setShowDeliveryMenu(!showDeliveryMenu)}
-              className="dropdown-box"
-            >
-              {deliveryOptions[deliveryOption].label} – ${deliveryOptions[deliveryOption].price.toFixed(2)}
-              <span style={{ float: "right" }}>{showDeliveryMenu ? "▲" : "▼"}</span>
-            </div>
-
-            {showDeliveryMenu && (
-              <div className="delivery-dropdown">
-                {Object.entries(deliveryOptions).map(([key, option]) => (
-                  <div
-                    key={key}
-                    onClick={() => {
-                      setDeliveryOption(key);
-                      setShowDeliveryMenu(false);
-                    }}
-                    style={{
-                      background: deliveryOption === key ? "#e6f7ff" : "white",
-                    }}
-                  >
-                    {option.label} – ${option.price.toFixed(2)}
-                  </div>
-                ))}
+          {cartItems.map((item) => (
+            <div className="cart-item" key={item._id}>
+              <img
+                src={item.productId?.image}
+                alt={item.productId?.name}
+                className="cart-item-img"
+              />
+              <div className="cart-item-info">
+                <h4>{item.productId?.name}</h4>
+                <p>
+                  ${item.productId?.price.toFixed(2)} × {item.quantity} = $
+                  {(item.productId?.price * item.quantity).toFixed(2)}
+                </p>
               </div>
+              <button
+                className="remove-btn"
+                onClick={() => handleRemoveItem(item.productId?._id)}
+              >
+                Remove
+              </button>
+            </div>
+          ))}
+
+          <hr />
+
+          <div className="cart-options">
+            <label>
+              <strong>Delivery Option:</strong>
+              <select
+                value={deliveryOption}
+                onChange={(e) => setDeliveryOption(e.target.value)}
+              >
+                <option value="standard">Standard (3–5 days) – $5.00</option>
+                <option value="express">Express (1–2 days) – $15.00</option>
+                <option value="pickup">Pickup – Free</option>
+                <option value="carryout">Carryout – $2.99</option>
+              </select>
+            </label>
+
+            <label>
+              <strong>Discount Code:</strong>
+              <input
+                type="text"
+                value={discountCode}
+                onChange={(e) => setDiscountCode(e.target.value)}
+                placeholder="Enter code (e.g. STUDENT)"
+              />
+            </label>
+          </div>
+
+          <div className="cart-summary">
+            <p>
+              Subtotal: $
+              {summary?.subtotal ? summary.subtotal.toFixed(2) : "0.00"}
+            </p>
+            <p>
+              Tax: ${summary?.tax ? summary.tax.toFixed(2) : "0.00"}
+            </p>
+            <p>
+              Delivery Fee: $
+              {summary?.deliveryFee ? summary.deliveryFee.toFixed(2) : "0.00"}
+            </p>
+            {summary?.discountAmount > 0 && (
+              <p className="discount">
+                Discount: -${summary.discountAmount.toFixed(2)}
+              </p>
             )}
+            <h2>
+              Total: ${summary?.total ? summary.total.toFixed(2) : "0.00"}
+            </h2>
           </div>
 
-          {/* Discount Code */}
-          <div style={{ marginTop: "1rem", maxWidth: "300px" }}>
-            <label htmlFor="discount">Discount Code:</label>
-            <input
-              id="discount"
-              type="text"
-              value={discountCode}
-              onChange={(e) => setDiscountCode(e.target.value)}
-              placeholder="Enter code (e.g. student)"
-              style={{
-                width: "100%",
-                padding: "0.5rem",
-                borderRadius: "6px",
-                border: "1px solid #ccc",
-                marginTop: "0.25rem",
-              }}
-            />
-          </div>
+          <button className="place-order-btn" onClick={handleNoPaymentCheckout}>
+            Place Order (No Payment)
+          </button>
 
-          {/* Summary */}
-          <div className="summary">
-            <h3>Subtotal: ${subtotal.toFixed(2)}</h3>
-            {isStudent && (
-              <h3 style={{ color: "green" }}>Student Discount: -${discount.toFixed(2)}</h3>
-            )}
-            <h3>Tax: ${taxAmount.toFixed(2)}</h3>
-            <h3>Delivery Fee: ${deliveryFee.toFixed(2)}</h3>
-            <h2>Total: ${totalWithTax.toFixed(2)}</h2>
-          </div>
+          <StripeCheckoutButton
+            userId={user.userId}
+            deliveryOption={deliveryOption}
+            discountCode={discountCode.trim()}
+          />
 
-          <div className="checkout-buttons">
-            <button className="checkout-btn" onClick={handleCheckout}>
-              Place Order (No Payment)
-            </button>
-            <PayNowButton cart={cart} />
-          </div>
+          <PayNowButton
+            userId={user.userId}
+            deliveryOption={deliveryOption}
+            discountCode={discountCode.trim()}
+          />
         </>
       )}
     </div>
