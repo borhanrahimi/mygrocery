@@ -223,10 +223,22 @@ exports.handleStripeWebhook = async (req, res) => {
 
   if (event.type === 'checkout.session.completed') {
     const session = event.data.object;
-    const metadata = session.metadata;
+    const metadata = session.metadata || {};
+    const userId = metadata.userId;
+
+    if (!userId) {
+      console.error('❌ Webhook: Missing userId in metadata');
+      return res.status(400).send('Missing user metadata');
+    }
+
+    const subtotal = parseFloat(metadata.subtotal || '0');
+    const discountAmount = parseFloat(metadata.discountAmount || '0');
+    const taxAmount = parseFloat(metadata.taxAmount || '0');
+    const deliveryFee = parseFloat(metadata.deliveryFee || '0');
+    const totalAmount = parseFloat(metadata.totalAmount || '0');
 
     try {
-      const cart = await Cart.findOne({ userId: metadata.userId }).populate("items.productId");
+      const cart = await Cart.findOne({ userId }).populate("items.productId");
       if (!cart || cart.items.length === 0) {
         console.log("❌ Webhook: Cart empty or not found");
         return res.status(400).send("Cart not found");
@@ -239,23 +251,23 @@ exports.handleStripeWebhook = async (req, res) => {
       }
 
       const order = new Order({
-        userId: metadata.userId,
+        userId,
         items: validItems.map(item => ({
           productId: item.productId._id,
           quantity: item.quantity
         })),
-        subtotal: metadata.subtotal,
+        subtotal,
         discountCode: metadata.discountCode,
-        discountAmount: metadata.discountAmount,
-        taxAmount: metadata.taxAmount,
+        discountAmount,
+        taxAmount,
         deliveryOption: metadata.deliveryOption,
-        deliveryFee: metadata.deliveryFee,
-        totalAmount: metadata.totalAmount,
+        deliveryFee,
+        totalAmount,
         status: "Paid"
       });
 
       await order.save();
-      await Cart.deleteOne({ userId: metadata.userId });
+      await Cart.deleteOne({ userId });
 
       console.log("✅ Webhook: Order saved and cart cleared");
       res.status(200).send("Order processed");

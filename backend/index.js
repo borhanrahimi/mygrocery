@@ -36,11 +36,19 @@ app.use(
   })
 );
 
-// ✅ Stripe webhook raw body route (must come BEFORE express.json)
+const orderController = require('./controllers/orderController');
+
+// ✅ Stripe webhook raw body routes (must come BEFORE express.json)
 app.use(
   '/api/payments/webhook',
   express.raw({ type: 'application/json' }),
   require('./routes/webhookRoutes') // ⬅️ Make sure this file exists
+);
+
+app.post(
+  '/api/orders/webhook',
+  express.raw({ type: 'application/json' }),
+  orderController.handleStripeWebhook
 );
 
 // ✅ Normal JSON middleware
