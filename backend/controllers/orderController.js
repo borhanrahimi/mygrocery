@@ -175,12 +175,14 @@ exports.createCheckoutSession = async (req, res) => {
       });
     }
 
+    const frontendBase = (process.env.FRONTEND_URL || "https://mygrocery.vercel.app").replace(/\/$/, "");
+
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
       mode: "payment",
       line_items,
-      success_url: `${process.env.FRONTEND_URL || "http://localhost:3000"}/success`,
-      cancel_url: `${process.env.FRONTEND_URL || "http://localhost:3000"}/cancel`,
+      success_url: `${frontendBase}/`,
+      cancel_url: `${frontendBase}/`,
       metadata: {
         userId: String(userId),
         deliveryOption: deliveryOption || "standard",
