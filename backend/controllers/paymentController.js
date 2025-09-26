@@ -138,6 +138,31 @@ exports.getSavedCards = async (req, res) => {
   }
 };
 
+// ✅ 3b. Get the default saved card (for existing UI call)
+exports.getDefaultCard = async (req, res) => {
+  const { userId } = req.params;
+
+  try {
+    const card = await PaymentMethod.findOne({ userId })
+      .sort({ isDefault: -1, _id: -1 });
+
+    if (!card) {
+      return res.json({});
+    }
+
+    res.json({
+      brand: card.brand,
+      last4: card.last4,
+      exp_month: card.expMonth,
+      exp_year: card.expYear,
+      paymentMethodId: card.paymentMethodId,
+    });
+  } catch (err) {
+    console.error("❌ Get default card error:", err.message);
+    res.status(500).json({ error: "Failed to get saved card" });
+  }
+};
+
 // ✅ 4. Stripe webhook: handle completed checkout and save order
 exports.handleStripeWebhook = async (req, res) => {
   const sig = req.headers["stripe-signature"];

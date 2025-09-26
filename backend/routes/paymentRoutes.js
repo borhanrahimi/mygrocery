@@ -10,6 +10,7 @@ router.post("/save-card", paymentController.attachPaymentMethod);
 
 // 📥 Get saved cards (optional UI)
 router.get("/saved-cards/:userId", paymentController.getSavedCards);
+router.get("/saved-card/:userId", paymentController.getDefaultCard);
 
 // ✅ Stripe Webhook (required for successful order + cart clear)
 router.post(

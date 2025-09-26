@@ -134,14 +134,24 @@ exports.createCheckoutSession = async (req, res) => {
       (subtotal - discountAmount + taxAmount + deliveryFee).toFixed(2)
     );
 
-    const line_items = validItems.map((item) => ({
-      price_data: {
-        currency: "usd",
-        product_data: { name: item.productId.name },
-        unit_amount: Math.round(item.productId.price * 100),
-      },
-      quantity: item.quantity,
-    }));
+    const discountRate =
+      discountCode?.toUpperCase() === "STUDENT" ? 0.1 : 0;
+
+    const line_items = validItems.map((item) => {
+      const baseUnitAmount = Math.round(item.productId.price * 100);
+      const discountedUnitAmount = discountRate
+        ? Math.max(Math.round(baseUnitAmount * (1 - discountRate)), 0)
+        : baseUnitAmount;
+
+      return {
+        price_data: {
+          currency: "usd",
+          product_data: { name: item.productId.name },
+          unit_amount: discountedUnitAmount,
+        },
+        quantity: item.quantity,
+      };
+    });
 
     if (deliveryFee > 0) {
       line_items.push({
@@ -165,23 +175,22 @@ exports.createCheckoutSession = async (req, res) => {
       });
     }
 
-    if (discountAmount > 0) {
-      line_items.push({
-        price_data: {
-          currency: "usd",
-          product_data: { name: "Student Discount" },
-          unit_amount: Math.round(discountAmount * -100),
-        },
-        quantity: 1,
-      });
-    }
-
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
       mode: "payment",
       line_items,
-      success_url: "http://localhost:3000/success",
-      cancel_url: "http://localhost:3000/cancel",
+      success_url: `${process.env.FRONTEND_URL || "http://localhost:3000"}/success`,
+      cancel_url: `${process.env.FRONTEND_URL || "http://localhost:3000"}/cancel`,
+      metadata: {
+        userId: String(userId),
+        deliveryOption: deliveryOption || "standard",
+        discountCode: discountCode || "",
+        subtotal: subtotal.toFixed(2),
+        discountAmount: discountAmount.toFixed(2),
+        taxAmount: taxAmount.toFixed(2),
+        deliveryFee: deliveryFee.toFixed(2),
+        totalAmount: totalAmount.toFixed(2),
+      },
     });
 
     console.log("✅ Stripe Session Created:", session.id);
